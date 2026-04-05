@@ -1,0 +1,20 @@
+Core identity facts:
+- Rui is an imposter posing as Victor Hart.
+- Real Victor lived abroad and is dead.
+
+Knowledge gates:
+- Elara's biological link to Amelia is unrevealed in chapter 1.
+- Lab biometric access rule is not explained yet in chapter 1 narration.
+
+Behavior rules:
+- Maria follows pre-sealed instructions, not live guidance.
+- Ethan uses a cover identity and has a left-wrist tracker.
+- Ines is complicit.
+- James is blackmailed into silence.
+
+Legal rule:
+- Forfeit clause triggers market sale at five heir deaths in 30 days under executor oversight.
+
+Continuity hard-stop:
+- No character gains knowledge before canonical reveal.
+- No meta-awareness language: characters must not imply they are in a story, and narration must not reference reader/writer/prompt/model.

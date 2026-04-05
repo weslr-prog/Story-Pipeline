@@ -1,0 +1,4 @@
+langchain-ollama
+gradio_client
+python-dotenv
+requests

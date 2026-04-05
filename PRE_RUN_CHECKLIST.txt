@@ -1,0 +1,16 @@
+Story_Time Pre-Run Checklist
+
+[ ] 1. Python environment is activated.
+[ ] 2. Dependencies are installed from requirements.txt.
+[ ] 3. ffmpeg is available (ffmpeg -version works).
+[ ] 4. Ollama service is running.
+[ ] 5. LLM model exists locally (ollama list includes your LLM_MODEL).
+[ ] 6. Chatterbox WebUI is running on CHATTERBOX_URL.
+[ ] 7. CHATTERBOX_API in .env matches discovered endpoint.
+[ ] 8. VOICE_SAMPLE path in .env exists and points to a valid WAV.
+[ ] 9. story_bible.json is filled with real content.
+[ ] 10. characters.json is filled with real content.
+[ ] 11. chapter_briefs.json has enough chapters for your CHAPTER_COUNT.
+[ ] 12. style_guide.txt and consistency_checklist.txt are complete.
+[ ] 13. scripts/preflight.py returns all required services as ok.
+[ ] 14. tts_engine.py smoke test created audio/smoke_00.wav.

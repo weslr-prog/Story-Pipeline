@@ -1,0 +1,25 @@
+[
+  {
+    "chapter_number": 1,
+    "title": "The Salt and the Silence",
+    "pov_character": "Elara",
+    "setting": "Storm-lashed Portuguese coastal mansion, from approach road to grand foyer and east-wing bedroom.",
+    "opens_with": "Elara arriving by taxi through fog and salt rain to a decaying Art Deco estate.",
+    "core_tension": "Elara senses the house and family are performing grief while hiding coordinated lies.",
+    "key_events": [
+      "Victor greets Elara with uncanny certainty and evasive references to the past.",
+      "Family introduced in the foyer; Clara weaponizes Elara's status and tensions surface.",
+      "Ethan watches Elara while unconsciously touching his left wrist.",
+      "Storm and saltwater pressure the east wing as the mansion groans like a living thing.",
+      "Elara hears heartbeat-like thumps in the walls tied to Amelia's final warning."
+    ],
+    "ends_with": "In her room, Elara presses her ear to cold plaster and hears the house exhale.",
+    "word_target": 2800,
+    "continuity_flags": [
+      "Elara does not yet know her biological link to Amelia.",
+      "Rui avoids specific pre-1985 memories.",
+      "James and Ines display restrained, suspicious body language toward Rui.",
+      "The wall heartbeat remains unexplained in chapter 1."
+    ]
+  }
+]

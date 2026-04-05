@@ -1,0 +1,86 @@
+[
+  {
+    "name": "Elara Myles",
+    "role": "Protagonist",
+    "age_or_range": 32,
+    "short_description": "Tech CEO and Amelia's true heir; unaware she is Amelia's biological niece until later.",
+    "voice_style": "Precise, calm bursts; controlled under pressure."
+  },
+  {
+    "name": "Ethan Cardoso",
+    "role": "Corporate spy / conflicted ally",
+    "age_or_range": 30,
+    "short_description": "Rui's biological son using the cover identity Ethan Myles; implanted NovaBio tracker in left wrist.",
+    "voice_style": "Soft-spoken with sudden intensity; guarded."
+  },
+  {
+    "name": "Rui Cardoso (posing as Victor Hart)",
+    "role": "Primary antagonist and imposter",
+    "age_or_range": 58,
+    "short_description": "Black-market broker who stole Victor's identity to seize Amelia's estate and vents.",
+    "voice_style": "Smooth, polished, evasive; eyes dart left before lies."
+  },
+  {
+    "name": "Aunt Ines",
+    "role": "Complicit matriarch",
+    "age_or_range": 62,
+    "short_description": "Recognized the imposter but stayed silent for financial control.",
+    "voice_style": "Cold, formal, declarative."
+  },
+  {
+    "name": "Dr. Amelia Hart",
+    "role": "Hidden architect",
+    "age_or_range": "70s",
+    "short_description": "Presumed dead geneticist living in sub-levels; engineered the final inheritance test.",
+    "voice_style": "Warm but clinical; concise."
+  },
+  {
+    "name": "Sophia Myles",
+    "role": "Vulnerable heir",
+    "age_or_range": 52,
+    "short_description": "Former teacher with degenerative illness; manipulated by others.",
+    "voice_style": "Fragmented, poetic whispers."
+  },
+  {
+    "name": "Clara Myles",
+    "role": "Catalyst victim",
+    "age_or_range": 28,
+    "short_description": "Actress who first pushes suspicion into the open before her death.",
+    "voice_style": "Sharp, theatrical bravado."
+  },
+  {
+    "name": "Cook Maria",
+    "role": "Housekeeper and envelope executor",
+    "age_or_range": 45,
+    "short_description": "Loyal servant following Amelia's sealed instructions without full context.",
+    "voice_style": "Ritualistic, brief, lullaby-like."
+  },
+  {
+    "name": "Butler James Hart",
+    "role": "Blackmailed truth-keeper",
+    "age_or_range": 65,
+    "short_description": "Real Victor's younger brother forced into silence, documenting evidence in military shorthand.",
+    "voice_style": "Gruff, economical, gesture-heavy."
+  },
+  {
+    "name": "Liam Myles",
+    "role": "Embedded watcher turned ally",
+    "age_or_range": 24,
+    "short_description": "Artist pressured into spying through sketches before conscience shift.",
+    "voice_style": "Nervous, stuttering, detail-focused."
+  },
+  {
+    "name": "Dr. Richard Myles",
+    "role": "Suppressed medical witness",
+    "age_or_range": 75,
+    "short_description": "Retired geneticist whose testimony later breaks Rui's narrative.",
+    "voice_style": "Often slurred, sharply technical when lucid."
+  },
+  {
+    "name": "Solicitor Pereira",
+    "role": "Estate executor",
+    "age_or_range": 55,
+    "short_description": "Legal overseer of the clause, initially deceived by Rui's reports.",
+    "voice_style": "Formal and measured."
+  }
+]

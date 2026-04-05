@@ -1,0 +1,53 @@
+{
+  "title": "11 Lives, 11 Lies",
+  "genre": "Gothic Mystery / Psychological Thriller",
+  "tone": "Atmospheric paranoia escalating into ethical confrontation",
+  "setting": {
+    "time": "Present day",
+    "place": "A decaying Art Deco mansion on the Portuguese Atlantic coast near Vento de Sal"
+  },
+  "pov": {
+    "type": "third_person_limited",
+    "whose": "Elara Myles"
+  },
+  "total_chapters": 12,
+  "themes": [
+    "identity and deception",
+    "legacy versus ownership",
+    "family complicity and guilt",
+    "ethics over profit",
+    "late redemption"
+  ],
+  "chapter_outline": [
+    "Ch1 arrival and heartbeat in the walls",
+    "Ch2 public humiliation and tunnels",
+    "Ch3 lab breach and vial discovery",
+    "Ch4 drowning and imposter revelation",
+    "Ch5 tracker confession and moral dilemma",
+    "Ch6 forfeit pressure and lab entrapment",
+    "Ch7 partial confession and rescue",
+    "Ch8 Amelia reveal and true inheritance",
+    "Ch9 betrayal timeline and cliff ledge fall",
+    "Ch10 final test and system activation",
+    "Ch11 buyers assault and greenhouse sacrifice",
+    "Ch12 legal resolution and stewardship"
+  ],
+  "world_rules": [
+    "The laboratory wing opens by biometric genetic match keyed to Amelia.",
+    "Elara can access the lab due to hidden biological relation to Amelia.",
+    "The vial labeled FOR ELARA is a biometric activator for main vent controls.",
+    "Maria follows pre-sealed envelopes, not live instructions.",
+    "Five heir deaths within 30 days trigger estate forfeit under executor oversight.",
+    "The vents are geothermal infrastructure, not a medical cure."
+  ],
+  "writing_rules": [
+    "Present tense only.",
+    "Elara-only perspective.",
+    "Short, subtext-heavy dialogue.",
+    "Use sensory motifs: salt, fog, house groan, vent hum.",
+    "No graphic violence.",
+    "Romance limited to suppressed gestures.",
+    "End chapter with a sensory cliffhanger.",
+    "Keep character tells consistent across scenes."
+  ]
+}

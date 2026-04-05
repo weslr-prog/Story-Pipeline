@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Virtual environments
+.venv/
+.venv*/
+
+# Environment files
+.env
+
+# macOS
+.DS_Store
+
+# Editor/workspace
+.vscode/
+*.code-workspace
+
+# Generated outputs
+audio/
+chapters/
+summaries/
+reviews/
+backups/
+cyoa/
+
+# Local cloned dependency
+chatterbox/
