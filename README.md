@@ -79,11 +79,62 @@ Replace placeholders in:
 - `style_guide.txt`
 - `consistency_checklist.txt`
 
+If using `Update Story Pipeline.txt`, feed Story Engine Phase outputs into these files:
+
+1. Story Bible -> `story_bible.json`
+2. Character roster -> `characters.json`
+3. Chapter blueprint -> `chapter_briefs.json`
+4. Writing package rules -> `style_guide.txt` and `consistency_checklist.txt`
+
+### Auto-convert Story Engine text docs to JSON
+
+Use the converter when you have these three text files:
+
+1. `Story DNA Summary.txt`
+2. `Story Bible.txt`
+3. `Chapter Blueprint.txt`
+
+Run deterministic local conversion (no API cost):
+
+```bash
+python scripts/convert_story_engine.py \
+	--dna "The Gap Protocol/Story DNA Summary.txt" \
+	--bible "The Gap Protocol/Story Bible.txt" \
+	--blueprint "The Gap Protocol/Chapter Blueprint.txt" \
+	--mode rule \
+	--out-dir .
+```
+
+This writes:
+
+1. `story_bible.json`
+2. `characters.json`
+3. `chapter_briefs.json`
+
+Other modes:
+
+1. `--mode prompt`: writes `story_engine_conversion_prompt.md` for use with any external LLM.
+2. `--mode hybrid`: writes JSON and the prompt file in one run.
+
 ## 6) Run novel pipeline
 
 ```bash
 python pipeline_novel.py
 ```
+
+Human review gates are enabled by default:
+
+1. `pre_narration` gate: pipeline pauses after chapter text files are written and before TTS narration.
+2. `post_chapter` gate: pipeline pauses again after narration and before the next chapter.
+
+When paused, a review packet is written under `reviews/chXX_*_review.md`. Edit JSON/TXT files in your local editor, then approve by creating the marker file shown in the packet (`reviews/chXX_*.approved`) and rerun.
+
+Stable low-load mode is now default for reliability on 16 GB systems:
+
+1. Smaller context (`LLM_NUM_CTX=4096`)
+2. Lower word target pressure (`1800-2400` base)
+3. Single expansion pass and single lint repair pass
+4. Slower, safer TTS pacing (`REQUEST_DELAY=1.00`, `RETRY_BACKOFF=1.00`)
 
 For first validation, keep `CHAPTER_COUNT` at `2` or `3` in `.env`, then scale up.
 

@@ -26,7 +26,6 @@ class LintSettings:
     max_sentence_repeat: int = 2
     meta_phrases: tuple[str, ...] = tuple(_META_DEFAULTS)
     chapter1_forbidden_terms: tuple[str, ...] = (
-        "for elara",
         "hidden door",
         "novaBio tracker",
         "tracker lay hidden",
@@ -47,7 +46,13 @@ def _sentences(text: str) -> list[str]:
 
 
 def _check_duplicate_paragraphs(text: str, max_repeat: int) -> dict[str, Any]:
-    normalized = [_normalize(p) for p in _paragraphs(text)]
+    normalized: list[str] = []
+    for paragraph in _paragraphs(text):
+        norm = _normalize(paragraph)
+        # Ignore punctuation-only separators like "---" and "***".
+        if not re.search(r"[a-z0-9]", norm):
+            continue
+        normalized.append(norm)
     counts = Counter(normalized)
     violations = [{"count": c, "paragraph": p[:260]} for p, c in counts.items() if c > max_repeat]
     return {
@@ -75,7 +80,7 @@ def _check_meta_phrases(text: str, phrases: tuple[str, ...]) -> dict[str, Any]:
         p = phrase.strip().lower()
         if not p:
             continue
-        pattern = r"\\b" + re.escape(p) + r"\\b"
+        pattern = r"\b" + re.escape(p) + r"\b"
         if re.search(pattern, lower):
             hits.append(phrase)
     return {
@@ -89,32 +94,47 @@ def _check_brief_order(text: str, key_events: list[str]) -> dict[str, Any]:
     lower = text.lower()
     cursor = 0
     missing: list[str] = []
+    stopwords = {
+        "their",
+        "there",
+        "while",
+        "with",
+        "from",
+        "into",
+        "that",
+        "this",
+        "then",
+        "when",
+        "like",
+        "tied",
+        "surface",
+        "introduced",
+    }
 
     for ev in key_events:
         tokens = [
             t
             for t in re.findall(r"[a-zA-Z]{4,}", ev.lower())
-            if t not in {"their", "there", "while", "with", "from", "into", "that"}
+            if t not in stopwords
         ]
         if not tokens:
             continue
 
-        candidates: list[str] = []
-        if len(tokens) >= 2:
-            candidates.append(" ".join(tokens[:2]))
-        candidates.append(tokens[0])
-
-        idx = -1
-        for cand in candidates:
-            pos = lower.find(cand, cursor)
+        seen_tokens: list[str] = []
+        token_positions: list[int] = []
+        for token in tokens:
+            if token in seen_tokens:
+                continue
+            seen_tokens.append(token)
+            pos = lower.find(token, cursor)
             if pos != -1:
-                idx = pos
-                break
+                token_positions.append(pos)
 
-        if idx == -1:
+        required_hits = 1 if len(tokens) <= 3 else 2
+        if len(token_positions) < required_hits:
             missing.append(ev)
         else:
-            cursor = idx + 1
+            cursor = min(token_positions) + 1
 
     in_order = not missing
     passed = in_order
@@ -134,7 +154,14 @@ def _check_chapter1_reveals(text: str, chapter_num: int, forbidden_terms: tuple[
         return {"name": "chapter1_reveal_gates", "passed": True, "violations": []}
 
     lower = text.lower()
-    hits = [term for term in forbidden_terms if term.lower() in lower]
+    hits: list[str] = []
+    for term in forbidden_terms:
+        clean = term.strip()
+        if not clean:
+            continue
+        pattern = r"(?<!\w)" + re.escape(clean.lower()) + r"(?!\w)"
+        if re.search(pattern, lower):
+            hits.append(term)
     return {
         "name": "chapter1_reveal_gates",
         "passed": not hits,

@@ -25,6 +25,10 @@ def _targets(ch: str) -> list[Path]:
         ROOT / "reviews" / f"{ch}_external_critic.md",
         ROOT / "reviews" / f"{ch}_external_critic_prompt.md",
         ROOT / "reviews" / f"{ch}_edited_for_external.txt",
+        ROOT / "reviews" / f"{ch}_pre_narration_review.md",
+        ROOT / "reviews" / f"{ch}_post_chapter_review.md",
+        ROOT / "reviews" / f"{ch}_pre_narration.approved",
+        ROOT / "reviews" / f"{ch}_post_chapter.approved",
     ]
 
 

@@ -1,7 +1,6 @@
 import json
 from pathlib import Path
 
-from dotenv import load_dotenv
 from langchain_ollama import ChatOllama
 
 from config import SETTINGS
@@ -9,7 +8,6 @@ from story_lint import LintSettings, lint_chapter, to_markdown
 from tts_engine import narrate_chapter
 
 ROOT = Path(__file__).resolve().parent
-load_dotenv(ROOT / ".env")
 
 
 def _load(path: str):
@@ -56,7 +54,7 @@ def _llm(phase: str, temp: float, max_tokens: int) -> ChatOllama:
         model=_model_for(phase),
         base_url=SETTINGS.ollama_url,
         temperature=temp,
-        num_ctx=8192,
+        num_ctx=SETTINGS.llm_num_ctx,
         num_predict=max_tokens,
         repeat_penalty=1.1,
     )
@@ -88,6 +86,68 @@ def _reviews_dir() -> Path:
     path = ROOT / SETTINGS.reviews_dir
     path.mkdir(parents=True, exist_ok=True)
     return path
+
+
+def _chapter_artifacts(chapter_num: int) -> dict[str, Path]:
+    ch = f"ch{chapter_num:02d}"
+    return {
+        "draft": ROOT / "chapters" / f"{ch}_draft.txt",
+        "edited": ROOT / "chapters" / f"{ch}_edited.txt",
+        "final": ROOT / "chapters" / f"{ch}_final.txt",
+        "tts": ROOT / "chapters" / f"{ch}_tts.txt",
+        "summary": ROOT / "summaries" / f"{ch}_summary.txt",
+        "audio": ROOT / "audio" / f"{ch}_narration.wav",
+        "lint_md": _reviews_dir() / f"{ch}_lint.md",
+        "scene_plan": _reviews_dir() / f"{ch}_scene_plan.md",
+    }
+
+
+def _review_marker_path(chapter_num: int, stage: str) -> Path:
+    return _reviews_dir() / f"ch{chapter_num:02d}_{stage}.approved"
+
+
+def _review_packet_path(chapter_num: int, stage: str) -> Path:
+    return _reviews_dir() / f"ch{chapter_num:02d}_{stage}_review.md"
+
+
+def _require_manual_review(chapter_num: int, stage: str, headline: str, files: list[Path]) -> None:
+    marker = _review_marker_path(chapter_num, stage)
+    if marker.exists():
+        print(f"[REVIEW] {stage} approved for chapter {chapter_num}: {marker}")
+        return
+
+    packet = _review_packet_path(chapter_num, stage)
+    lines = [
+        f"# {headline}",
+        "",
+        "Edit files as needed, then approve this checkpoint by creating this marker file:",
+        str(marker),
+        "",
+        "Files to review:",
+    ]
+    for path in files:
+        lines.append(f"- {path}")
+    lines.append("")
+    lines.append("After approval, rerun: python pipeline_novel.py")
+    packet.write_text("\n".join(lines), encoding="utf-8")
+
+    raise RuntimeError(
+        f"Paused at {stage} review for chapter {chapter_num}. "
+        f"Review packet: {packet}. Create marker to continue: {marker}"
+    )
+
+
+def _chapter_complete(chapter_num: int) -> bool:
+    files = _chapter_artifacts(chapter_num)
+    required = [files["final"], files["tts"], files["summary"], files["audio"]]
+    if not all(path.exists() for path in required):
+        return False
+
+    if SETTINGS.pause_before_narration_review and not _review_marker_path(chapter_num, "pre_narration").exists():
+        return False
+    if SETTINGS.pause_after_chapter_review and not _review_marker_path(chapter_num, "post_chapter").exists():
+        return False
+    return True
 
 
 def _lint_settings() -> LintSettings:
@@ -153,9 +213,12 @@ Repair the chapter to pass lint checks.
 Requirements:
 - remove duplicate blocks and repeated sentence loops
 - keep key events in brief order
+- if brief_event_flow fails, insert each missing event from the lint report in chapter-brief order
 - remove meta-awareness language
+- if chapter1_reveal_gates fails, remove the exact forbidden terms and locally rewrite affected lines without adding new lore
 - preserve chapter intent and scene order
 - do not introduce new major events
+- do not use markdown separators such as "---", "***", or "~~~"
 Return only repaired chapter text.
 
 FAILING CHECKS:
@@ -346,6 +409,38 @@ def load_prior_summaries(chapter_num: int) -> str:
 
 
 def run_chapter(chapter_num: int) -> None:
+    files = _chapter_artifacts(chapter_num)
+    if files["final"].exists() and files["tts"].exists() and files["summary"].exists():
+        print(f"[RESUME] Chapter {chapter_num} reusing existing text artifacts")
+
+        if SETTINGS.pause_before_narration_review:
+            _require_manual_review(
+                chapter_num,
+                "pre_narration",
+                "Pre-Narration Review",
+                [files["final"], files["summary"], files["tts"], files["lint_md"], files["scene_plan"]],
+            )
+
+        if not files["audio"].exists():
+            tts_text = files["tts"].read_text(encoding="utf-8")
+            narrate_chapter(
+                text=tts_text,
+                voice_sample=SETTINGS.voice_sample,
+                output_path=str(files["audio"]),
+                chapter_num=chapter_num,
+            )
+
+        if SETTINGS.pause_after_chapter_review:
+            _require_manual_review(
+                chapter_num,
+                "post_chapter",
+                "Post-Chapter Review",
+                [files["final"], files["summary"], files["tts"], files["audio"]],
+            )
+
+        print(f"[OK] Chapter {chapter_num} complete")
+        return
+
     bible = _load("story_bible.json")
     characters = _load("characters.json")
     briefs = _load("chapter_briefs.json")
@@ -386,6 +481,7 @@ Target {word_min}-{word_max} words.
 Respect style and continuity.
 - Characters are not aware they are in a story.
 - Do not use phrases like "this is only the beginning", "she was on a journey", "the story had only started", or references to reader/writer/prompt/model.
+- Do not use markdown separators such as "---", "***", or "~~~".
 Write strictly from this scene plan and keep scene order.
 Return only chapter text.
 
@@ -456,20 +552,36 @@ TEXT:
     tts_prep = _llm("tts_prep", temp=0.3, max_tokens=5500)
     tts_text = _invoke(tts_prep, tts_prep_prompt.format(final=final))
 
-    (ROOT / "chapters" / f"ch{chapter_num:02d}_draft.txt").write_text(draft, encoding="utf-8")
-    (ROOT / "chapters" / f"ch{chapter_num:02d}_edited.txt").write_text(edited, encoding="utf-8")
-    (ROOT / "chapters" / f"ch{chapter_num:02d}_final.txt").write_text(final, encoding="utf-8")
-    (ROOT / "summaries" / f"ch{chapter_num:02d}_summary.txt").write_text(summary, encoding="utf-8")
-    (ROOT / "chapters" / f"ch{chapter_num:02d}_tts.txt").write_text(tts_text, encoding="utf-8")
+    files["draft"].write_text(draft, encoding="utf-8")
+    files["edited"].write_text(edited, encoding="utf-8")
+    files["final"].write_text(final, encoding="utf-8")
+    files["summary"].write_text(summary, encoding="utf-8")
+    files["tts"].write_text(tts_text, encoding="utf-8")
 
     print(f"[INFO] Word targeting mode: {word_mode} ({word_min}-{word_max})")
+
+    if SETTINGS.pause_before_narration_review:
+        _require_manual_review(
+            chapter_num,
+            "pre_narration",
+            "Pre-Narration Review",
+            [files["final"], files["summary"], files["tts"], files["lint_md"], files["scene_plan"]],
+        )
 
     narrate_chapter(
         text=tts_text,
         voice_sample=SETTINGS.voice_sample,
-        output_path=str(ROOT / "audio" / f"ch{chapter_num:02d}_narration.wav"),
+        output_path=str(files["audio"]),
         chapter_num=chapter_num,
     )
+
+    if SETTINGS.pause_after_chapter_review:
+        _require_manual_review(
+            chapter_num,
+            "post_chapter",
+            "Post-Chapter Review",
+            [files["final"], files["summary"], files["tts"], files["audio"]],
+        )
 
     print(f"[OK] Chapter {chapter_num} complete")
 
@@ -483,8 +595,7 @@ def run_all() -> None:
         raise RuntimeError("chapter_briefs.json is empty.")
 
     for chapter_num in range(1, max_chapters + 1):
-        final_path = ROOT / "chapters" / f"ch{chapter_num:02d}_final.txt"
-        if final_path.exists():
+        if _chapter_complete(chapter_num):
             print(f"[SKIP] Chapter {chapter_num} already exists")
             continue
         run_chapter(chapter_num)

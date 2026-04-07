@@ -1,0 +1,147 @@
+﻿STORY BIBLE
+Working Title: The Gap Protocol
+________________
+
+
+1. SETTING PROFILE
+The story takes place in a near-future, state-funded research facility hidden on the outskirts of a quiet Midwestern town, surrounded by dense forest that acts as both a natural barrier and psychological cage. The architecture is sterile and modern—white walls, glass observation rooms, biometric locks—but small inconsistencies (flickering lights, inaccessible wings, outdated equipment) hint at something older and less controlled beneath the surface. Outside, the town is subdued, economically stagnant, and largely dependent on the facility, with locals who either ignore its presence or quietly resent it. Inside, participants are monitored constantly under the guise of care, creating a tense social microcosm where trust is fragile, alliances shift quickly, and paranoia spreads easily. The overall atmosphere should feel claustrophobic, quietly oppressive, and unnervingly clinical—like something is always watching, and always one step ahead.
+________________
+
+
+2. CHARACTER ROSTER
+Eli Carter (32)
+* Role: Protagonist
+* Core wound: Believes they caused their sibling’s disappearance → shuts down emotionally when confronted with guilt or uncertainty
+* Flawed belief: “If I uncover the truth, I’ll finally be in control.”
+* Profile: Eli is analytical, observant, and emotionally guarded, joining the study to understand persistent gaps in memory tied to their sibling’s disappearance. Externally, they want answers and transparency from the facility. Internally, they fear the truth will confirm their worst suspicion—that they were responsible.
+* Voice note: Speaks precisely and calmly, often deflecting emotion with logic and measured skepticism
+* Story function: Anchor for the mystery; audience lens into unraveling truth
+* Cost of change: Must relinquish control and accept emotional vulnerability
+________________
+
+
+Mara Vance (29)
+* Role: Secondary Protagonist / Love Interest
+* Core wound: Betrayed by someone she trusted deeply → tests people constantly and withholds key truths
+* Flawed belief: “If I stay one step ahead, no one can hurt me.”
+* Profile: Mara is sharp, intuitive, and quietly manipulative, often noticing patterns others miss. She claims to want to expose the facility but hides that she may already know more than she admits. Her connection with Eli is both genuine and strategic.
+* Voice note: Speaks in half-truths and layered meanings, often sounding like she knows more than she says
+* Story function: Emotional counterbalance to Eli; drives tension and ambiguity
+* Cost of change: Must risk genuine trust without control
+________________
+
+
+Dr. Adrian Kessler (54)
+* Role: Antagonist (Face of the Institution)
+* Core wound: Lost a loved one due to neurological illness → became obsessed with controlling memory and cognition
+* Flawed belief: “The ends justify any means if it leads to progress.”
+* Profile: Kessler is calm, composed, and unsettlingly empathetic, presenting himself as a benevolent scientist. He genuinely believes his work will save lives, even if it requires moral compromise. His control over the facility is absolute—but not necessarily complete.
+* Voice note: Warm and reassuring, with a subtle undertone of authority that discourages questioning
+* Story function: Embodiment of institutional control and moral ambiguity
+* Cost of change: Must confront that his work has caused irreparable harm
+________________
+
+
+Jonah Reyes (38)
+* Role: Supporting
+* Core wound: Former military operative involved in a classified incident → hypervigilant and distrustful of authority
+* Flawed belief: “Trust gets you killed.”
+* Profile: Jonah is physically capable, blunt, and always scanning for threats. He wants to escape the facility and believes the study is a cover for something dangerous. He hides that parts of the situation feel disturbingly familiar to him.
+* Voice note: Direct, clipped, and often confrontational
+* Story function: Raises stakes and pushes external conflict (escape, resistance)
+* Cost of change: Must learn to rely on others
+________________
+
+
+Lena Park (26)
+* Role: Supporting
+* Core wound: Grew up being dismissed and overlooked → overcompensates by seeking validation and approval
+* Flawed belief: “If I’m useful enough, I’ll matter.”
+* Profile: Lena is observant, empathetic, and detail-oriented, often noticing small inconsistencies others miss. She wants to help the group understand what’s happening and prove her worth. She hides her fear that she may be more expendable than anyone else.
+* Voice note: Slightly nervous but thoughtful, often asking insightful questions
+* Story function: Connective tissue between characters; reveals clues
+* Cost of change: Must accept her value isn’t conditional
+________________
+
+
+Caleb Dunn (41)
+* Role: Supporting / Red Herring
+* Core wound: Lost his family due to his own past mistakes → overcompensates by trying to appear cooperative and harmless
+* Flawed belief: “If I don’t stand out, I won’t be targeted.”
+* Profile: Caleb is mild-mannered, agreeable, and seemingly forgettable, often staying out of conflict. He claims to want normalcy and safety but avoids deeper involvement. His behavior makes him suspicious, though his true role may be less sinister than it appears.
+* Voice note: Soft-spoken, hesitant, avoids strong opinions
+* Story function: Misdirection; draws suspicion away from the true threat
+* Cost of change: Must risk being seen and judged
+________________
+
+
+Nina Alvarez (34)
+* Role: Expendable (Catalyst Character)
+* Core wound: Survivor of a traumatic accident → compulsively seeks truth and closure
+* Flawed belief: “If I dig deep enough, I’ll finally feel safe.”
+* Profile: Nina is bold, curious, and increasingly paranoid as inconsistencies mount. She becomes one of the first to aggressively question the study’s legitimacy. Her discovery of a major clue puts her directly in danger.
+* Voice note: Urgent, intense, increasingly frantic as tension builds
+* Story function: Raises stakes through disappearance or death; proves danger is real
+* Cost of change: (Unfulfilled) Her refusal to stop searching leads to her downfall
+________________
+
+
+The Helix Foundation
+* Role: Antagonistic Force (Institution)
+* Core wound: (Institutional) Built on past failures and hidden experiments → operates through secrecy and control
+* Flawed belief: “People are safer when they don’t know the truth.”
+* Profile: A powerful, opaque organization funding the study under the guise of cognitive research. It operates through layers of misinformation, surveillance, and manipulation. Even its own staff may not fully understand its scope.
+* Voice note: Communicated through sterile reports, indirect messaging, and controlled personnel
+* Story function: Omnipresent threat; source of mystery and control
+* Cost of change: Loss of control and exposure
+________________
+
+
+3. TONE AND STYLE RULES
+1. Third person limited POV (primarily Eli, occasionally Mara)
+2. Past tense
+3. Dialogue is natural and purposeful—lean, with subtext doing most of the work
+4. Pacing is a slow burn with sharp spikes of tension and revelation
+5. Emphasis on psychological tension over physical action
+6. Strong focus on atmosphere, unease, and creeping dread
+7. Character interiority is critical—thoughts, doubts, and perceptions drive the narrative
+8. Mystery unfolds through layered reveals, not exposition dumps
+9. Avoid graphic violence; imply rather than show
+10. Avoid explicit sexual content; romance is subtle and tension-driven
+11. Minimal profanity; language should feel grounded but controlled
+12. Every scene should either deepen mystery, escalate tension, or reveal character
+________________
+
+
+4. THEME STATEMENT
+At its core, this story explores the fragility of identity and the unsettling possibility that memory—what we rely on to define ourselves—can be manipulated, erased, or rewritten. It asks: if your memories are unreliable, who are you really? The narrative examines the tension between truth and safety, questioning whether knowing everything is worth the cost, and whether connection to others can anchor us when our own minds cannot be trusted. Ultimately, it suggests that identity is not just memory, but the choices we make when faced with uncertainty.
+________________
+
+
+5. THREE-ACT SKELETON
+Act 1 (Chapters 1–3) — Setup
+* Introduce Eli and arrival at the facility
+* Establish the group and their shared memory gaps
+* Subtle inconsistencies in the environment and staff behavior
+* Inciting incident: participants discover their missing time overlaps exactly
+* Nina begins digging deeper; tension rises
+________________
+
+
+Act 2 (Chapters 4–8) — Escalation
+* Group forms uneasy alliances; mistrust grows
+* Mara reveals partial truths; Eli begins questioning everything
+* Jonah pushes for escape; others resist
+* Nina discovers critical evidence → disappears or is killed
+* Red herring suspicion falls on Caleb
+* Major reversal: realization that the experiment is ongoing and they are still being manipulated
+* Darkest moment: Eli questions their own role in the experiment and loses sense of reality
+________________
+
+
+Act 3 (Chapters 9–10) — Resolution
+* Truth about Helix Foundation partially uncovered
+* Confrontation with Dr. Kessler
+* Eli must choose between exposing the truth or preserving stability
+* Final twist: not all memories restored—or some are newly altered
+* Ending leaves lingering ambiguity but emotional closure through connection/trust

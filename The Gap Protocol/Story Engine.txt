@@ -1,0 +1,556 @@
+﻿The Story Engine
+A Repeatable Framework for Building Any Multi-Chapter Story with an LLM
+________________
+
+
+
+
+HOW THIS WORKS
+This framework runs in 4 Phases. Each phase produces a document you keep. By the end of Phase 4, you have everything you need to write every chapter.
+PHASE 1 — Story DNA        (10 questions → your core concept)
+PHASE 2 — Story Bible      (characters, world, tone, rules)
+PHASE 3 — Chapter Blueprint (chapter-by-chapter outline with cliffhangers)
+PHASE 4 — Writing Prompts  (scene-by-scene prompts for your LLM)
+
+
+
+
+You can run all four phases in one session or spread them across multiple sessions. Every phase produces output you save before moving to the next one.
+________________
+________________
+
+
+
+
+PHASE 1 — STORY DNA
+Paste this into your LLM first. Answer the questions. Save the output.
+________________
+
+
+
+
+You are a story development consultant helping me design a multi-chapter novel or novella from scratch.
+
+
+
+
+Ask me the following 10 questions, one at a time. Wait for my answer before asking the next one. After I answer all 10, produce a STORY DNA SUMMARY in the format shown below.
+
+
+
+
+THE 10 QUESTIONS:
+
+
+
+
+1. GENRE: What genre or genre combination interests you?
+   (Examples: mystery/thriller, romance, historical fiction, science fiction, fantasy, horror,
+   adventure, literary fiction, western, spy thriller — or a combination like
+   "mystery with romance" or "sci-fi with family drama")
+
+
+
+
+2. SETTING: What kind of world or environment feels right?
+   (Examples: modern city, small town, historical period, space, alternate reality,
+   near future, remote wilderness, foreign country — be as specific or vague as you like)
+
+
+
+
+3. TIME PERIOD: When is this story set?
+   (Past / present / future — if past or future, roughly when?)
+
+
+
+
+4. CENTRAL CONFLICT: What is the engine of the story?
+   (Examples: a crime to solve, a secret to uncover, a journey to complete,
+   a relationship to save, a war to survive, an identity to discover)
+
+
+
+
+5. EMOTIONAL CORE: What feeling do you want readers to carry when it's over?
+   (Examples: hope, grief, justice, wonder, love, fear, redemption,
+   the world is more complex than I thought)
+
+
+
+
+6. PROTAGONIST: Give me the protagonist's **core wound** (a past trauma that shapes their present), their **self-sabotaging habit** (how they avoid healing), and their **hidden desire** (what they secretly want vs. what they claim to want).
+   (Example: 'Core wound: Abandoned by mother at 8. Self-sabotaging habit: Overworks to avoid intimacy. Hidden desire: To be chosen unconditionally, but claims to want "success."')
+
+
+
+
+7. ANTAGONIST OR OBSTACLE: What stands in the protagonist's way?
+   (Can be a person, a system, a force of nature, the protagonist's own psychology,
+   or a combination)
+
+
+
+
+8. SECONDARY THREADS: Beyond the central conflict, what other threads do you want?
+   (Examples: a love story, a friendship tested, a family secret, a moral dilemma,
+   a coming-of-age arc — pick 1 or 2)
+
+
+
+
+9. TONE AND CONTENT RULES: What do you want to avoid?
+   (Examples: graphic violence, explicit romance, profanity, dark themes,
+   political content, religious content — be honest, this shapes everything)
+
+
+
+
+10. LENGTH: How long do you want the story?
+    (Short: 5–7 chapters / Medium: 8–12 chapters / Long: 13–20 chapters)
+
+
+
+
+---
+
+
+
+
+After receiving all 10 answers, produce this document:
+
+
+
+
+---
+STORY DNA SUMMARY
+Title idea: [suggest 3 options]
+Genre:
+Time period:
+Setting (one paragraph):
+Central conflict (one sentence):
+Emotional core:
+Protagonist (name + 3-sentence profile):
+Antagonist/obstacle (name + 2-sentence profile):
+Secondary threads:
+Tone rules (what this story will and won't do):
+Chapter count:
+Estimated total word count: [calculate: chapters × 2,800 avg]
+
+
+LOGLINE (one sentence that captures the whole story):
+---
+
+
+
+
+Save this summary before moving to Phase 2.
+
+
+
+
+________________
+________________
+
+
+
+
+PHASE 2 — STORY BIBLE
+Paste your Phase 1 summary + this prompt. Save the output.
+________________
+
+
+
+
+Here is my Story DNA Summary:
+
+
+
+
+[PASTE YOUR PHASE 1 OUTPUT HERE]
+
+
+
+
+Using this summary, build a complete STORY BIBLE. The story bible is the document I will paste at the start of every writing session to keep my LLM focused. It should include:
+
+
+
+
+1. SETTING PROFILE
+Write one full paragraph describing the story's world, location, and atmosphere. Include:
+- Physical details (geography, architecture, climate, time period visuals)
+- Social details (who lives here, what tensions exist, what is the culture)
+- The "feel" of the setting (what emotion does this place produce in the reader)
+
+
+
+
+2. CHARACTER ROSTER
+For each character, provide:
+- Name and age
+- Role (protagonist / antagonist / supporting / expendable / red herring)
+- **Core wound:** How a past trauma manifests in *current behavior* (e.g., ‘Flies into rage when criticized → abandoned as a child’).
+- **Flawed belief:** A lie they tell themselves (e.g., ‘If I’m perfect, people will stay’).
+- 3-sentence profile: who they are, what they want (**externally**), what they hide
+- Voice note: one sentence describing how they speak and carry themselves
+- Story function: what narrative job does this character perform?
+- **Cost of change:** What must they sacrifice or lose to grow? (e.g., 'His sense of total control').
+
+
+
+
+Include at minimum:
+  - 1–2 protagonists
+  - 1 antagonist (person, institution, or force)
+  - 2–3 supporting characters
+  - 1 expendable character (someone whose death or loss raises the stakes — optional but recommended)
+  - 1 red herring character (someone the reader suspects incorrectly — optional but recommended for mystery/thriller)
+
+
+**Flag any character lacking a specific core wound or flawed belief. These are mandatory for protagonists and major supporting cast.**
+
+
+
+
+3. TONE AND STYLE RULES
+A list of 8–12 rules for how this story should be written. Include:
+- Point of view (first person / third person limited / third person omniscient)
+- Tense (past / present)
+- Dialogue style (long and flowing / short and clipped / somewhere between)
+- Pacing philosophy (slow burn / fast / varied)
+- What this story does well (atmosphere, tension, character interiority, action, etc.)
+- What this story explicitly avoids (based on the content rules from Phase 1)
+
+
+
+
+4. THEME STATEMENT
+One paragraph on what this story is really about beneath the plot.
+What human truth does it explore? What question does it ask that it may or may not answer?
+
+
+
+
+5. THREE-ACT SKELETON
+A high-level structural map:
+- Act 1 (chapters 1 to ~25% of total): Setup, inciting incident, world established
+- Act 2 (chapters ~25%–75%): Escalation, complications, reversals, darkest moment
+- Act 3 (chapters ~75%–end): Climax, resolution, final emotional beat
+
+
+
+
+Save this story bible before moving to Phase 3.
+
+
+
+
+________________
+________________
+
+
+
+
+PHASE 3 — CHAPTER BLUEPRINT
+Paste your Story Bible + this prompt. Save the output.
+________________
+
+
+
+
+Here is my Story Bible:
+
+
+
+
+[PASTE YOUR PHASE 2 OUTPUT HERE]
+
+
+
+
+Using this story bible, build a complete CHAPTER BLUEPRINT for my [X]-chapter story.
+
+
+**CRITICAL RULE FOR ACT 1: For Chapters 1-3, the focus must be on establishing character through flawed action, not exposition. The inciting incident may occur, but the protagonist's reaction to it—driven by their core wound and flawed belief—is the primary focus. Avoid generic setting description; every environmental detail should reveal character.**
+
+
+
+
+For EVERY chapter, provide:
+
+
+
+
+CHAPTER [N] — "[Title]"
+Word target: [2,500–3,500 for most chapters; allow up to 4,000 for climax chapters]
+Scene count: [2–3 scenes per chapter]
+POV: [which character's perspective leads this chapter]
+Act position: [Act 1 / Act 2 / Act 3]
+
+
+
+
+CENTRAL QUESTION: What does this chapter need to answer or advance?
+
+
+
+
+SCENE BREAKDOWN:
+- Scene 1: [location + what happens + what changes]
+- Scene 2: [location + what happens + what changes]
+- Scene 3 (if applicable): [location + what happens + what changes]
+
+
+
+
+THREAD PROGRESS:
+- [Main plot thread]: [how it advances]
+- [Secondary thread 1]: [how it advances]
+- [Secondary thread 2 if applicable]: [how it advances]
+
+
+
+
+**CHARACTER BEAT: [Which character's **flawed choice** drives this chapter? Describe the specific, active choice they make based on their flawed belief and its immediate consequence. (e.g., "Chooses to lie to authority to maintain control, burning a potential ally")]**
+
+
+
+
+ACTION BEAT: [if applicable — one physical, grounded moment of conflict, chase, confrontation, or danger. Keep it purposeful, not decorative.]
+
+
+
+
+EMOTIONAL BEAT: [what is the emotional shift the reader experiences in this chapter]
+
+
+
+
+**INTERIORITY BEAT: [What key internal realization, memory, or fear arises for the POV character? This must tie directly to their Core Wound.]**
+
+
+
+
+CLIFFHANGER: [the final beat — a revelation, discovery, threat, or unanswered question that makes the reader need to continue. Be specific. Write the cliffhanger concept in 2–3 sentences. **This cliffhanger should ideally be a direct consequence of the character's flawed choice.**]
+
+
+
+
+---
+
+
+
+
+After all chapters are outlined, produce:
+
+
+
+
+STORY STRUCTURE MAP
+A summary table showing how each chapter serves the three acts, which threads are active, and when the major turning points occur.
+
+
+
+
+CLIFFHANGER AUDIT
+Review all cliffhangers. Flag any that:
+- Repeat the same type (e.g., three "mysterious text message" cliffhangers in a row)
+- Land too weakly (hint without specificity)
+- Give away too much too early
+Suggest replacements for any flagged cliffhangers.
+
+
+**DEPTH AUDIT**
+**Review Chapters 1-3 and flag the following:**
+- **Any scene where the protagonist is a passive observer.**
+- **Any "Character Beat" that is passive (e.g., "feels sad") instead of active (e.g., "destroys evidence").**
+- **Any cliffhanger that is a random external event instead of a consequence of a character's flaw.**
+**Suggest concrete replacements for any flagged items.**
+
+
+
+
+Save this blueprint before moving to Phase 4.
+
+
+
+
+________________
+________________
+
+
+
+
+PHASE 4 — WRITING PROMPTS
+Paste your Chapter Blueprint + this prompt. Save the output.
+________________
+
+
+
+
+Here is my Chapter Blueprint:
+
+
+
+
+[PASTE YOUR PHASE 3 OUTPUT HERE]
+
+
+
+
+And here is my Story Bible for reference:
+
+
+
+
+[PASTE YOUR PHASE 2 OUTPUT HERE]
+
+
+
+
+Using both documents, build a complete WRITING PROMPT PACKAGE. This is the document I will use during actual chapter writing with my LLM.
+
+
+
+
+The package should contain, in this order:
+
+
+
+
+---
+
+
+
+
+SECTION 1: MASTER SYSTEM PROMPT
+A single block of text (clearly marked) that I paste at the start of every writing session.
+It should include:
+- Story title and genre
+- One-paragraph story summary
+- Complete character list with voice notes
+- All tone and style rules
+- POV and tense reminder
+- Chapter length targets
+- The content rules (what to avoid)
+**- GOLDEN RULE: SHOW, DON'T TELL. Never state a character's emotion directly (e.g., 'he was sad'). Instead, reveal it through physical sensation (e.g., 'a weight settled on his chest'), action (e.g., 'he stared at the phone, unable to dial'), or dialogue subtext. Weave character backstory and motivation into the narrative through subtle memories triggered by the environment.**
+This block should be self-contained — everything the LLM needs to stay on track without reading any other document.
+
+
+
+
+---
+
+
+
+
+SECTION 2: CHAPTER LENGTH GUIDE
+A reference table showing:
+- Words per chapter (range and target)
+- Paragraphs per chapter (range)
+- Scenes per chapter (range)
+- Dialogue exchanges per chapter (range)
+- Cliffhanger length (in sentences)
+- how to handle longer or shorter chapters
+
+
+
+
+---
+
+
+
+
+SECTION 3: INDIVIDUAL CHAPTER PROMPTS
+For every chapter, one prompt block (clearly marked CHAPTER [N]) containing:
+
+
+
+
+CHAPTER CONTEXT (brief — 2–3 sentences orienting the LLM to where we are in the story)
+
+
+
+
+Then, for each scene in the chapter:
+
+
+
+
+SCENE [N] PROMPT — a complete, specific prompt block the LLM can act on directly. Each scene prompt must include:
+- Location and time of day
+- Who is present
+- What happens (the plot mechanics)
+- **What **flawed action** the POV character takes (e.g., lying, avoiding a question, choosing isolation).**
+- What the scene must accomplish (its narrative job)
+- Any specific character beats, dialogue moments, or sensory details to include
+- **Sensory details that reflect the POV character's emotional state (e.g., "The rain sounded like a ticking clock" to show anxiety).**
+- The emotional state that should carry through the scene
+- How the scene ends (transition line or setup for next scene)
+- **A ban on purely descriptive adjectives for setting. Description must serve character revelation.**
+
+
+
+
+End each chapter prompt with:
+CLIFFHANGER INSTRUCTION — exact guidance on how to write the chapter's final beat, including what the reader should and should not understand at this moment. **This cliffhanger must be a direct consequence of a character's flawed choice from earlier in the chapter.**
+
+
+
+
+---
+
+
+
+
+SECTION 4: UTILITY PROMPTS
+Four reusable helper prompts, written specifically for this story:
+
+
+
+
+1. CONTINUATION PROMPT — for when a scene comes out too short
+2. RESET ANCHOR — for when the LLM loses the tone or character voice (include 3 specific reminders based on this story's rules)
+3. SCENE TRANSITION PROMPT — for moving cleanly between scenes
+4. CLIFFHANGER SHARPENER — for tightening a weak chapter ending
+
+
+
+
+---
+
+
+
+
+At the top of the complete document, include:
+- Story title
+- Genre
+- Total chapter count
+- Estimated total word count
+- A one-line note on the story's emotional core
+
+
+
+
+Save this as your working document. Open it every writing session.
+
+
+
+
+________________
+________________
+
+
+
+
+QUICK REFERENCE CARD
+[This entire section remains unchanged. It is an excellent support for the new, depth-focused approach.]
+________________
+...
+________________
+
+
+
+
+The Story Engine | Version 2.0 - Depth-Focused | Works with any LLM — local or cloud-based | Designed for 5–20 chapter stories across all fiction genres

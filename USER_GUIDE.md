@@ -77,6 +77,80 @@ VOICE_SAMPLE=voices/s5_023.wav
 
 The pipeline validates all required files before running.
 
+### Story Engine Phase Mapping
+
+If you are using `Update Story Pipeline.txt` (Story Engine v2.0), map outputs into this repo as follows:
+
+1. Phase 1 (Story DNA Summary): keep as reference document for alignment.
+2. Phase 2 (Story Bible): load into `story_bible.json`.
+3. Phase 2 (Character roster): load into `characters.json`.
+4. Phase 3 (Chapter Blueprint): convert chapter entries into `chapter_briefs.json`.
+5. Phase 4 (Writing Prompt Package): distill style and constraints into:
+	- `style_guide.txt`
+	- `consistency_checklist.txt`
+
+For best quality in Chapters 1-3, make sure `chapter_briefs.json` includes flawed-action consequences and interiority beats so the writer prompt stays character-driven instead of exposition-driven.
+
+### Automatic Story Engine text-to-JSON conversion
+
+If you have Story Engine outputs outside VS Code, convert them automatically with:
+
+1. `Story DNA Summary.txt`
+2. `Story Bible.txt`
+3. `Chapter Blueprint.txt`
+
+Converter script:
+
+1. `scripts/convert_story_engine.py`
+
+Option A (recommended): deterministic local conversion (cost-consistent)
+
+```bash
+python scripts/convert_story_engine.py \
+	--dna "/path/to/Story DNA Summary.txt" \
+	--bible "/path/to/Story Bible.txt" \
+	--blueprint "/path/to/Chapter Blueprint.txt" \
+	--mode rule \
+	--out-dir /Users/wes/Desktop/Story_Time
+```
+
+Option B: prompt-generation for external LLM conversion
+
+```bash
+python scripts/convert_story_engine.py \
+	--dna "/path/to/Story DNA Summary.txt" \
+	--bible "/path/to/Story Bible.txt" \
+	--blueprint "/path/to/Chapter Blueprint.txt" \
+	--mode prompt \
+	--out-dir /Users/wes/Desktop/Story_Time
+```
+
+This writes `story_engine_conversion_prompt.md` with strict JSON output requirements.
+
+Option C: hybrid mode
+
+```bash
+python scripts/convert_story_engine.py \
+	--dna "/path/to/Story DNA Summary.txt" \
+	--bible "/path/to/Story Bible.txt" \
+	--blueprint "/path/to/Chapter Blueprint.txt" \
+	--mode hybrid \
+	--out-dir /Users/wes/Desktop/Story_Time
+```
+
+Hybrid generates pipeline JSON plus the prompt file for optional refinement.
+
+Expected outputs:
+
+1. `story_bible.json`
+2. `characters.json`
+3. `chapter_briefs.json`
+
+Validation tip:
+
+1. Run `python -m py_compile pipeline_novel.py`.
+2. Run one chapter (`CHAPTER_COUNT=1`) before long runs.
+
 ## 4) Starting services
 
 ### Start Ollama model
@@ -169,6 +243,48 @@ Expected output:
 ```bash
 python pipeline_novel.py
 ```
+
+### Human-in-the-loop checkpoints (default enabled)
+
+Two manual review gates pause the run so you can edit chapter artifacts before continuing:
+
+1. `pre_narration` checkpoint (before TTS)
+2. `post_chapter` checkpoint (after narration, before next chapter)
+
+When a checkpoint is reached, pipeline writes a review packet:
+
+1. `reviews/chXX_pre_narration_review.md` or `reviews/chXX_post_chapter_review.md`
+2. Packet lists files to edit and marker file to create for approval
+
+Approval workflow:
+
+1. Open listed files in your editor (JSON/TXT edits are supported by any local editor)
+2. Save edits
+3. Create marker file shown in the packet (for example `reviews/ch01_pre_narration.approved`)
+4. Rerun `python pipeline_novel.py`
+
+Pipeline resumes from existing artifacts and avoids re-running expensive steps.
+
+Checkpoint toggles in `.env`:
+
+```dotenv
+PAUSE_BEFORE_NARRATION_REVIEW=true
+PAUSE_AFTER_CHAPTER_REVIEW=true
+```
+
+Set either to `false` to disable that gate.
+
+### Stable low-load profile (default)
+
+Default runtime values are tuned for session stability on constrained hardware:
+
+1. `LLM_NUM_CTX=4096`
+2. `WORD_TARGET_MIN=1800`, `WORD_TARGET_MAX=2400`
+3. `EXPANSION_PASSES=1`
+4. `MAX_LINT_REPAIRS=1`
+5. `REQUEST_DELAY=1.00`
+6. `RETRY_BACKOFF=1.00`
+7. `SILENCE_PAD=0.60`
 
 What it does per chapter:
 
