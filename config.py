@@ -5,7 +5,8 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 ROOT = Path(__file__).resolve().parent
-load_dotenv(ROOT / ".env", override=True)
+# Keep .env defaults, but allow explicitly exported env vars to take precedence at runtime.
+load_dotenv(ROOT / ".env", override=False)
 
 
 def _env_float(name: str, default: float) -> float:
@@ -37,6 +38,11 @@ def _env_csv(name: str, default: str) -> tuple[str, ...]:
 
 @dataclass(frozen=True)
 class Settings:
+    llm_backend: str = os.getenv("LLM_BACKEND", "local_disk_kv")
+    use_local_disk_kv: bool = _env_bool("USE_LOCAL_DISK_KV", False)
+    local_disk_kv_url: str = os.getenv("LOCAL_DISK_KV_URL", "http://127.0.0.1:8080/v1/chat/completions")
+    local_disk_kv_model: str = os.getenv("LOCAL_DISK_KV_MODEL", "llama3-turbo-disk")
+
     ollama_url: str = os.getenv("OLLAMA_URL", "http://localhost:11434")
     llm_model: str = os.getenv("LLM_MODEL", "qwen2.5:7b")
     writer_model: str = os.getenv("WRITER_MODEL", "")
@@ -44,7 +50,11 @@ class Settings:
     critic_model: str = os.getenv("CRITIC_MODEL", "")
     archivist_model: str = os.getenv("ARCHIVIST_MODEL", "")
     tts_prep_model: str = os.getenv("TTS_PREP_MODEL", "")
-    llm_num_ctx: int = _env_int("LLM_NUM_CTX", 4096)
+    llm_num_ctx: int = _env_int("LLM_NUM_CTX", 8192)
+    llm_repeat_penalty: float = _env_float("LLM_REPEAT_PENALTY", 1.2)
+    llm_call_timeout_seconds: int = _env_int("LLM_CALL_TIMEOUT_SECONDS", 240)
+    llm_call_retry_attempts: int = _env_int("LLM_CALL_RETRY_ATTEMPTS", 2)
+    llm_call_retry_backoff: float = _env_float("LLM_CALL_RETRY_BACKOFF", 3.0)
 
     chatterbox_url: str = os.getenv("CHATTERBOX_URL", "http://127.0.0.1:7860")
     chatterbox_api: str = os.getenv("CHATTERBOX_API", "")
@@ -58,13 +68,22 @@ class Settings:
     chapter_count: int = _env_int("CHAPTER_COUNT", 10)
     word_target_min: int = _env_int("WORD_TARGET_MIN", 1800)
     word_target_max: int = _env_int("WORD_TARGET_MAX", 2400)
-    target_minutes_min: float = _env_float("TARGET_MINUTES_MIN", 0.0)
-    target_minutes_max: float = _env_float("TARGET_MINUTES_MAX", 0.0)
+    target_minutes_min: float = _env_float("TARGET_MINUTES_MIN", 15.0)
+    target_minutes_max: float = _env_float("TARGET_MINUTES_MAX", 20.0)
     assumed_wpm: int = _env_int("ASSUMED_WPM", 150)
-    expansion_passes: int = _env_int("EXPANSION_PASSES", 1)
+    expansion_passes: int = _env_int("EXPANSION_PASSES", 2)
+    intra_chapter_context_chars: int = _env_int("INTRA_CHAPTER_CONTEXT_CHARS", 6000)
+
+    writer_max_tokens: int = _env_int("WRITER_MAX_TOKENS", 2200)
+    editor_max_tokens: int = _env_int("EDITOR_MAX_TOKENS", 2000)
+    critic_max_tokens: int = _env_int("CRITIC_MAX_TOKENS", 1800)
+    expander_max_tokens: int = _env_int("EXPANDER_MAX_TOKENS", 2600)
+    compressor_max_tokens: int = _env_int("COMPRESSOR_MAX_TOKENS", 1800)
+    archivist_max_tokens: int = _env_int("ARCHIVIST_MAX_TOKENS", 450)
+    tts_prep_max_tokens: int = _env_int("TTS_PREP_MAX_TOKENS", 2200)
 
     lint_enabled: bool = _env_bool("LINT_ENABLED", True)
-    max_lint_repairs: int = _env_int("MAX_LINT_REPAIRS", 1)
+    max_lint_repairs: int = _env_int("MAX_LINT_REPAIRS", 2)
     max_duplicate_paragraph_repeats: int = _env_int("MAX_DUPLICATE_PARAGRAPH_REPEATS", 1)
     max_sentence_repeat: int = _env_int("MAX_SENTENCE_REPEAT", 2)
     meta_phrases: tuple[str, ...] = _env_csv(
@@ -75,17 +94,36 @@ class Settings:
         "CHAPTER1_FORBIDDEN_TERMS",
         "hidden door,novaBio tracker,tracker lay hidden",
     )
+    first_chapter_guidance_enabled: bool = _env_bool("FIRST_CHAPTER_GUIDANCE_ENABLED", True)
+    first_chapter_guidance_file: str = os.getenv("FIRST_CHAPTER_GUIDANCE_FILE", "FIRST_CHAPTER.md")
+    chapter1_decision_verbs: tuple[str, ...] = _env_csv(
+        "CHAPTER1_DECISION_VERBS",
+        "decide,choose,refuse,agree,confess,run,steal,lie,confront,accept,decline,promise,risk",
+    )
+    chapter1_red_flag_phrases: tuple[str, ...] = _env_csv(
+        "CHAPTER1_RED_FLAG_PHRASES",
+        "woke up,alarm clock,looked in the mirror,it was all a dream",
+    )
 
     style_influence: str = os.getenv("STYLE_INFLUENCE", "")
 
     exaggeration: float = _env_float("EXAGGERATION", 0.40)
-    cfg_weight: float = _env_float("CFG_WEIGHT", 0.60)
+    cfg_weight: float = _env_float("CFG_WEIGHT", 0.45)
     temperature: float = _env_float("TEMPERATURE", 0.70)
-    silence_pad: float = _env_float("SILENCE_PAD", 0.60)
+    silence_pad: float = _env_float("SILENCE_PAD", 0.25)
+    narration_speed: float = _env_float("NARRATION_SPEED", 1.00)
     sample_rate: int = _env_int("SAMPLE_RATE", 22050)
     request_delay: float = _env_float("REQUEST_DELAY", 1.00)
     max_retries: int = _env_int("MAX_RETRIES", 3)
     retry_backoff: float = _env_float("RETRY_BACKOFF", 1.00)
+    tts_sentence_timeout_seconds: int = _env_int("TTS_SENTENCE_TIMEOUT_SECONDS", 90)
+    intro_lead_in_seconds: float = _env_float("INTRO_LEAD_IN_SECONDS", 1.40)
+    pause_multiplier_end: float = _env_float("PAUSE_MULTIPLIER_END", 1.00)
+    pause_multiplier_mid: float = _env_float("PAUSE_MULTIPLIER_MID", 1.15)
+    pause_paragraph_bonus: float = _env_float("PAUSE_PARAGRAPH_BONUS", 0.18)
+    min_pause_end: float = _env_float("MIN_PAUSE_END", 0.16)
+    min_pause_mid: float = _env_float("MIN_PAUSE_MID", 0.09)
+    chapter_intro_enabled: bool = _env_bool("CHAPTER_INTRO_ENABLED", True)
 
     voice_sample: str = os.getenv("VOICE_SAMPLE", "voices/narrator.wav")
 

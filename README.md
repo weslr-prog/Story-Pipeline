@@ -2,9 +2,53 @@
 
 Local-first story generation and narration pipeline using Ollama + Chatterbox Gradio WebUI.
 
+## Story Studio (Web UI v1)
+
+Run local web UI:
+
+```bash
+python app.py
+```
+
+Story Studio prefers `http://127.0.0.1:7861`.
+If that port is busy, it automatically selects the next open port in `7861-7871` and prints the exact URL at startup.
+
+Optional launch env overrides:
+
+1. `STUDIO_HOST` (default `127.0.0.1`)
+2. `STUDIO_PORT` (default `7861`)
+3. `STUDIO_PORT_MAX` (default `7871`)
+4. `STUDIO_STRICT_PORT=1` to fail instead of fallback
+
+Unified startup (recommended):
+
+```bash
+python scripts/start_story_runner.py
+```
+
+This launcher starts/checks Ollama, Chatterbox, and Story Studio, opens Story Studio, and shows a live terminal dashboard.
+
+Current v1 includes:
+
+1. Project creation and active-project switching.
+2. Upload/edit of Story Engine source documents without manual file paths.
+3. One-click template creation for `style_guide.txt` and `consistency_checklist.txt` inside the UI.
+4. Readiness checks before conversion/sync (required docs + outputs + voice status).
+5. Rule/prompt/hybrid conversion to project-scoped JSON outputs.
+6. Voice upload/sync/download workflow with accepted-format labeling (WAV recommended).
+7. Output preview and project file download.
+8. One-click sync of converted JSON (plus style/consistency files) into root pipeline files for existing CLI runs.
+9. Run Dashboard tab for run mode selection (`One Chapter`, `Sequential`, or `Resume`), explicit one-chapter targeting, existing-output handling (`Prompt each time`, `Rebuild`, `Skip`, `Cancel`), live run snapshot, review marker approvals, and narration text editing.
+
 ## Full Documentation
 
 Use `USER_GUIDE.md` for complete setup, server requirements, model selection, TTS control explanations, and full operation workflow.
+
+Local disk-backed KV mode docs:
+
+1. `DISK_BACKED_KV_SETUP.md` (setup and run path)
+2. `LOCAL_DISK_KV_PIPELINE.md` (how backend selection and wrapper flow work)
+3. `OPENCLAW_ROLLBACK.md` (revert steps)
 
 Use `PRE_RUN_CHECKLIST.txt` before long runs to catch common setup misses early.
 
@@ -34,6 +78,15 @@ cp .env.example .env
 ```
 
 3. Put your narrator sample in `voices/` and set `VOICE_SAMPLE` in `.env` to that file path.
+
+4. Choose backend in `.env`:
+
+```dotenv
+LLM_BACKEND=local_disk_kv
+USE_LOCAL_DISK_KV=0
+```
+
+Set `LLM_BACKEND=openclaw` to revert.
 
 ## 2) Start dependencies
 
@@ -131,12 +184,15 @@ When paused, a review packet is written under `reviews/chXX_*_review.md`. Edit J
 
 Stable low-load mode is now default for reliability on 16 GB systems:
 
-1. Smaller context (`LLM_NUM_CTX=4096`)
-2. Lower word target pressure (`1800-2400` base)
-3. Single expansion pass and single lint repair pass
-4. Slower, safer TTS pacing (`REQUEST_DELAY=1.00`, `RETRY_BACKOFF=1.00`)
+1. Moderate context (`LLM_NUM_CTX=8192`)
+2. Lower word target pressure (`2000-2600` for validation)
+3. Bounded expansion/lint repair passes
+4. Safer TTS pacing with chapter intro lead-in and paragraph-aware pause control
 
 For first validation, keep `CHAPTER_COUNT` at `2` or `3` in `.env`, then scale up.
+
+Recommended baseline model on 16 GB Apple Silicon is `qwen2.5:7b`.
+If you need larger context, use TurboQuant disk-backed KV with `LOCAL_DISK_KV_MODEL` only after validating stability in short runs.
 
 ## 7) Run CYOA pipeline
 
@@ -151,3 +207,7 @@ Default script run renders first 3 nodes for validation.
 - Resume behavior: completed chapter files and segment manifests are reused.
 - If Chatterbox queue errors appear, increase `REQUEST_DELAY` in `.env`.
 - If sentence endings sound clipped, lower `EXAGGERATION` first, then `TEMPERATURE`, then increase `SILENCE_PAD`.
+- Chapter narration now prepends `Chapter N: Title` automatically when `CHAPTER_INTRO_ENABLED=true`.
+- Add room to absorb narration with `INTRO_LEAD_IN_SECONDS`, `PAUSE_MULTIPLIER_MID`, and `PAUSE_PARAGRAPH_BONUS`.
+- SSML/paralinguistic tags are not supported by this Chatterbox path; tags are stripped before synthesis.
+- Backend boundary: novel pipeline supports `local_disk_kv`; current CYOA pipeline runs through Ollama settings.
