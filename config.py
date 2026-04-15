@@ -64,6 +64,7 @@ class Settings:
     pause_for_external_critic: bool = _env_bool("PAUSE_FOR_EXTERNAL_CRITIC", True)
     pause_before_narration_review: bool = _env_bool("PAUSE_BEFORE_NARRATION_REVIEW", True)
     pause_after_chapter_review: bool = _env_bool("PAUSE_AFTER_CHAPTER_REVIEW", True)
+    require_prenarration_approval: bool = _env_bool("REQUIRE_PRENARRATION_APPROVAL", False)
 
     chapter_count: int = _env_int("CHAPTER_COUNT", 10)
     word_target_min: int = _env_int("WORD_TARGET_MIN", 1800)
