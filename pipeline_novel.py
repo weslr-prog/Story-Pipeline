@@ -2,7 +2,11 @@ import json
 import importlib
 import re
 import signal
+import subprocess
+import threading
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from difflib import SequenceMatcher
 from pathlib import Path
 from typing import List, Tuple
 
@@ -11,6 +15,9 @@ from story_lint import LintSettings, lint_chapter, to_markdown
 from tts_engine import narrate_chapter
 
 ROOT = Path(__file__).resolve().parent
+_LLM_CALL_SEMAPHORE = threading.BoundedSemaphore(max(1, SETTINGS.llm_concurrency_limit))
+_LLM_PACING_LOCK = threading.Lock()
+_LAST_LLM_CALL_TS = 0.0
 
 
 class LLMCallTimeoutError(RuntimeError):
@@ -110,11 +117,49 @@ def _word_count(text: str) -> int:
 
 def _log(message: str) -> None:
     stamp = time.strftime("%Y-%m-%d %H:%M:%S")
-    print(f"[{stamp}] {message}")
+    print(f"[{stamp}] {message}", flush=True)
+
+
+def _chapter_complete_alert_mode() -> str:
+    return str(getattr(SETTINGS, "chapter_complete_alert", "double_beep") or "double_beep").strip().lower().replace(" ", "_")
+
+
+def _play_chapter_complete_alert(chapter_num: int) -> None:
+    mode = _chapter_complete_alert_mode()
+    if mode in {"off", "none", "disabled", "0", "false"}:
+        return
+
+    # macOS-native audio cues for chapter completion.
+    if mode == "gong":
+        sounds = ["/System/Library/Sounds/Glass.aiff"]
+    else:
+        sounds = ["/System/Library/Sounds/Ping.aiff", "/System/Library/Sounds/Ping.aiff"]
+
+    played_any = False
+    for sound_path in sounds:
+        try:
+            subprocess.run(["afplay", sound_path], check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            played_any = True
+            if len(sounds) > 1:
+                time.sleep(0.12)
+        except Exception:
+            continue
+
+    if not played_any:
+        print("\a", end="", flush=True)
+
+    _log(f"[INFO] Chapter {chapter_num} complete alert played ({mode})")
 
 
 def _with_deadline(timeout_seconds: int, label: str, fn):
-    if timeout_seconds <= 0 or not hasattr(signal, "setitimer"):
+    # signal.setitimer/SIGALRM only work in the main thread.
+    # Worker threads (concurrent chapter execution) fall through to fn() directly
+    # and rely on the HTTP-level timeout already set in local_llm.py.
+    if (
+        timeout_seconds <= 0
+        or not hasattr(signal, "setitimer")
+        or threading.current_thread() is not threading.main_thread()
+    ):
         return fn()
 
     def _handle_timeout(signum, frame):
@@ -131,17 +176,35 @@ def _with_deadline(timeout_seconds: int, label: str, fn):
 
 
 def _invoke_guarded(client, prompt: str, *, label: str) -> str:
+    global _LAST_LLM_CALL_TS
     total_attempts = max(1, SETTINGS.llm_call_retry_attempts + 1)
     last_exc: Exception | None = None
 
     for attempt in range(1, total_attempts + 1):
         started = time.time()
+        prompt_words = _word_count(prompt)
+        prompt_tokens = int(prompt_words / 0.75)
+        _log(
+            f"[DEBUG] {label} start "
+            f"(attempt {attempt}/{total_attempts}, prompt_words={prompt_words}, "
+            f"prompt_tokens~={prompt_tokens}, timeout={SETTINGS.llm_call_timeout_seconds}s)"
+        )
         try:
-            result = _with_deadline(
-                SETTINGS.llm_call_timeout_seconds,
-                label,
-                lambda: _invoke(client, prompt),
-            )
+            with _LLM_CALL_SEMAPHORE:
+                min_interval = max(0.0, SETTINGS.llm_min_request_interval_seconds)
+                if min_interval > 0:
+                    with _LLM_PACING_LOCK:
+                        now = time.monotonic()
+                        sleep_for = min_interval - (now - _LAST_LLM_CALL_TS)
+                        if sleep_for > 0:
+                            time.sleep(sleep_for)
+                        _LAST_LLM_CALL_TS = time.monotonic()
+
+                result = _with_deadline(
+                    SETTINGS.llm_call_timeout_seconds,
+                    label,
+                    lambda: _invoke(client, prompt),
+                )
             elapsed = max(0.0, time.time() - started)
             _log(f"[INFO] {label} completed in {elapsed:.1f}s")
             return result
@@ -429,9 +492,88 @@ CONTEXT:
     return scene_plan
 
 
+def _rewrite_scene_plan(chapter_num: int, brief: dict, context: str, invalid_plan: str, parse_error: str, attempt: int) -> str:
+    rewrite_prompt = f"""
+You are fixing a scene plan format error for chapter {chapter_num}.
+
+Your previous output failed parsing. Rewrite it in this exact schema with exactly 3 scenes and no extra sections:
+
+1) Scene title
+- Goal: one-line objective
+- Entry state: where the scene starts emotionally/situationally
+- Conflict beat: what pressure or turn hits this scene
+- Exit state: where the scene lands
+
+2) Scene title
+- Goal: ...
+- Entry state: ...
+- Conflict beat: ...
+- Exit state: ...
+
+3) Scene title
+- Goal: ...
+- Entry state: ...
+- Conflict beat: ...
+- Exit state: ...
+
+Hard rules:
+- Return markdown only.
+- Exactly three numbered blocks: 1), 2), 3).
+- Do not use headings like "Scene Zero" or "####".
+- Do not include code fences, notes, word targets, continuity flags, or extra prose.
+- Keep each field to one line.
+
+CHAPTER BRIEF:
+{json.dumps(brief, indent=2)}
+
+CONTEXT:
+{context}
+
+PARSER ERROR:
+{parse_error}
+
+INVALID PLAN TO FIX:
+{invalid_plan}
+"""
+    planner = _llm("editor", temp=0.1, max_tokens=1400)
+    repaired = _invoke_guarded(planner, rewrite_prompt, label=f"chapter {chapter_num} scene plan rewrite attempt {attempt}")
+    (_reviews_dir() / f"ch{chapter_num:02d}_scene_plan_retry{attempt}.md").write_text(repaired, encoding="utf-8")
+    return repaired
+
+
 def _parse_scene_plan(scene_plan_md: str) -> list[dict[str, str]]:
-    blocks = [b.strip() for b in re.split(r"(?m)^\s*\d+\)\s*", scene_plan_md) if b.strip()]
+    cleaned_lines: list[str] = []
+    in_code_fence = False
+    for raw in scene_plan_md.splitlines():
+        line = raw.strip()
+        if line.startswith("```"):
+            in_code_fence = not in_code_fence
+            continue
+        if in_code_fence:
+            continue
+        if line.startswith("#"):
+            continue
+        if line.lower().startswith("scene plan"):
+            continue
+        cleaned_lines.append(raw)
+
+    normalized_md = "\n".join(cleaned_lines)
+    blocks = [b.strip() for b in re.split(r"(?mis)^\s*(?:\d+[\)\.:\-]|scene\s+\d+[\)\.:\-]?)\s*", normalized_md) if b.strip()]
     scenes: list[dict[str, str]] = []
+
+    field_aliases = {
+        "goal": "goal",
+        "objective": "goal",
+        "entry state": "entry_state",
+        "entry": "entry_state",
+        "opening state": "entry_state",
+        "conflict beat": "conflict_beat",
+        "conflict": "conflict_beat",
+        "turning point": "conflict_beat",
+        "exit state": "exit_state",
+        "exit": "exit_state",
+        "outcome": "exit_state",
+    }
 
     for idx, block in enumerate(blocks, start=1):
         lines = [line.strip() for line in block.splitlines() if line.strip()]
@@ -441,16 +583,31 @@ def _parse_scene_plan(scene_plan_md: str) -> list[dict[str, str]]:
         title = lines[0]
         if ":" in title and title.lower().startswith("scene title"):
             title = title.split(":", 1)[1].strip()
+        title = re.sub(r"^(?:scene\s+\d+\s*[:\-.]\s*)", "", title, flags=re.I).strip() or f"Scene {idx}"
+
         parts: dict[str, str] = {}
+        current_key: str | None = None
         for line in lines[1:]:
-            cleaned = line.replace("**", "")
-            m = re.match(r"^-\s*(Goal|Entry state|Conflict beat|Exit state)\s*:\s*(.+)$", cleaned, flags=re.I)
+            cleaned = re.sub(r"^[-*]\s*", "", line.replace("**", "")).strip()
+            m = re.match(r"^(Goal|Objective|Entry state|Entry|Opening state|Conflict beat|Conflict|Turning point|Exit state|Exit|Outcome)\s*:\s*(.+)$", cleaned, flags=re.I)
             if not m:
+                if current_key and cleaned:
+                    parts[current_key] = f"{parts.get(current_key, '')} {cleaned}".strip()
                 continue
-            label = m.group(1).lower().replace(" ", "_")
-            parts[label] = m.group(2).strip()
+
+            label = m.group(1).lower().strip()
+            current_key = field_aliases[label]
+            parts[current_key] = m.group(2).strip()
 
         required = ["goal", "entry_state", "conflict_beat", "exit_state"]
+        if not all(k in parts for k in required):
+            unlabeled = [re.sub(r"^[-*]\s*", "", l).strip() for l in lines[1:] if l.strip()]
+            if len(unlabeled) >= 4:
+                parts.setdefault("goal", unlabeled[0])
+                parts.setdefault("entry_state", unlabeled[1])
+                parts.setdefault("conflict_beat", unlabeled[2])
+                parts.setdefault("exit_state", unlabeled[3])
+
         if not all(k in parts for k in required):
             raise RuntimeError(
                 f"Scene {idx} in scene plan is missing required fields.\n"
@@ -467,8 +624,77 @@ def _parse_scene_plan(scene_plan_md: str) -> list[dict[str, str]]:
             }
         )
 
-    if len(scenes) != 3:
-        raise RuntimeError(f"Scene planner must return exactly 3 scenes. Parsed {len(scenes)} scenes.")
+    if len(scenes) < 3:
+        raise RuntimeError(f"Scene planner must return at least 3 scenes. Parsed {len(scenes)} scenes.")
+    if len(scenes) > 3:
+        scenes = scenes[:3]
+
+    return scenes
+
+
+def _render_scene_plan(scenes: list[dict[str, str]]) -> str:
+    lines: list[str] = []
+    for i, sc in enumerate(scenes, start=1):
+        lines.append(f"{i}) {sc['title']}")
+        lines.append(f"- Goal: {sc['goal']}")
+        lines.append(f"- Entry state: {sc['entry']}")
+        lines.append(f"- Conflict beat: {sc['conflict']}")
+        lines.append(f"- Exit state: {sc['exit']}")
+        lines.append("")
+    return "\n".join(lines).strip() + "\n"
+
+
+def _fallback_scenes_from_brief(chapter_num: int, brief: dict) -> list[dict[str, str]]:
+    events = [str(e).strip() for e in (brief.get("key_events") or brief.get("events") or []) if str(e).strip()]
+    scene_zero = (brief.get("scene_zero") or brief.get("opens_with") or "").strip()
+    core_tension = (brief.get("core_tension") or "Escalate pressure on the POV character.").strip()
+    ending = (brief.get("ends_with") or "End with a visible consequence that raises stakes.").strip()
+
+    if not events:
+        events = [scene_zero, core_tension, ending]
+
+    total = len(events)
+    base = max(1, total // 3)
+    extra = total % 3
+    chunks: list[list[str]] = []
+    start = 0
+    for i in range(3):
+        size = base + (1 if i < extra else 0)
+        end = min(total, start + size)
+        chunk = events[start:end]
+        if not chunk:
+            chunk = [events[-1]]
+        chunks.append(chunk)
+        start = end
+
+    scenes: list[dict[str, str]] = []
+    for idx, chunk in enumerate(chunks, start=1):
+        first = chunk[0]
+        last = chunk[-1]
+        yes_no = next((line for line in chunk if "YES, BUT" in line.upper() or "NO, AND" in line.upper()), "")
+        entry = scene_zero if idx == 1 else "Carries forward directly from the prior scene's consequence."
+        conflict = yes_no or core_tension
+        exit_state = ending if idx == 3 else last
+
+        scenes.append(
+            {
+                "title": f"Scene {idx}",
+                "goal": first,
+                "entry": entry,
+                "conflict": conflict,
+                "exit": exit_state,
+            }
+        )
+
+    report_lines = [f"# ch{chapter_num:02d} scene fallback", ""]
+    for i, sc in enumerate(scenes, start=1):
+        report_lines.append(f"{i}) {sc['title']}")
+        report_lines.append(f"- Goal: {sc['goal']}")
+        report_lines.append(f"- Entry state: {sc['entry']}")
+        report_lines.append(f"- Conflict beat: {sc['conflict']}")
+        report_lines.append(f"- Exit state: {sc['exit']}")
+        report_lines.append("")
+    (_reviews_dir() / f"ch{chapter_num:02d}_scene_plan_fallback.md").write_text("\n".join(report_lines), encoding="utf-8")
 
     return scenes
 
@@ -531,6 +757,8 @@ Respect style and continuity.
 - Do not use phrases like "this is only the beginning", "she was on a journey", "the story had only started", or references to reader/writer/prompt/model.
 - Do not use markdown separators such as "---", "***", or "~~~".
 - Return continuous prose only. No headings, bullet lists, labels, or markdown.
+- Avoid repeating sentence stems or rephrasing the same point across consecutive paragraphs.
+- Use varied sentence lengths and avoid reusing distinctive clauses from prior scenes.
 {opening_instruction}
 - Include one explicit scene reversal in Yes, But / No, And form by end-state.
 - Ensure the interior realization is triggered by the action beat, not idle reflection.
@@ -602,33 +830,65 @@ def _stitch_scenes(scenes: List[str]) -> str:
 
 
 def _deduplicate_chapter(text: str) -> str:
-    """Deterministically remove repeated paragraphs and consecutive repeated sentences."""
+    """Deterministically remove repeated/near-duplicate paragraphs and repeated sentences."""
+
+    def _canon(value: str) -> str:
+        normalized = re.sub(r"[^a-z0-9\s]", "", value.lower())
+        return re.sub(r"\s+", " ", normalized).strip()
+
     paragraphs = text.split("\n\n")
-    seen: dict[str, int] = {}
+    seen_keys: list[str] = []
     deduped: list[str] = []
     for para in paragraphs:
-        key = para.strip().lower()
+        key = _canon(para)
         if not key:
             deduped.append(para)
             continue
-        if key in seen:
-            continue  # drop second+ occurrence
-        seen[key] = 1
+
+        near_dup = False
+        for prev_key in seen_keys:
+            if key == prev_key:
+                near_dup = True
+                break
+            if SequenceMatcher(None, key, prev_key).ratio() >= 0.97:
+                near_dup = True
+                break
+
+        if near_dup:
+            continue
+
+        seen_keys.append(key)
         deduped.append(para)
 
-    # Also collapse runs of identical sentences within each paragraph
+    # Also collapse runs of exact/near-identical sentences.
     cleaned: list[str] = []
     for para in deduped:
-        sentences = para.split(". ")
+        sentences = re.split(r"(?<=[.!?])\s+", para)
         out: list[str] = []
         prev = ""
         for s in sentences:
-            if s.strip().lower() != prev:
-                out.append(s)
-                prev = s.strip().lower()
-        cleaned.append(". ".join(out))
+            current = _canon(s)
+            if not current:
+                continue
+            if current == prev:
+                continue
+            if prev and SequenceMatcher(None, current, prev).ratio() >= 0.98:
+                continue
+            if out and SequenceMatcher(None, current, _canon(out[-1])).ratio() >= 0.98:
+                continue
+            if len(out) >= 2 and SequenceMatcher(None, current, _canon(out[-2])).ratio() >= 0.98:
+                continue
+            if len(current) >= 24 and out and current in _canon(out[-1]):
+                continue
+            if len(current) >= 24 and out and _canon(out[-1]) in current:
+                continue
 
-    return "\n\n".join(cleaned)
+            if s.strip():
+                out.append(s)
+                prev = current
+        cleaned.append(" ".join(out).strip())
+
+    return "\n\n".join(chunk for chunk in cleaned if chunk.strip())
 
 
 def _guarantee_chapter1_opening_verb(chapter_text: str, decision_verbs: tuple[str, ...]) -> str:
@@ -787,6 +1047,8 @@ Do not add new major plot events.
 Deepen existing scenes using sensory detail, subtext, and internal reaction.
 Maintain continuity.
 Return only revised chapter text.
+- Do not repeat any sentence-level idea that already appears in the chapter.
+- Prefer concrete new detail over restating existing paragraphs.
 
 CONTEXT:
 {context}
@@ -861,10 +1123,12 @@ def load_prior_summaries(chapter_num: int) -> str:
 
 
 def run_chapter(chapter_num: int) -> None:
+    chapter_started = time.time()
     files = _chapter_artifacts(chapter_num)
     briefs = _load("chapter_briefs.json")
     brief = briefs[chapter_num - 1]
     chapter_title = _chapter_title_from_brief(chapter_num, brief)
+    _log(f"[INFO] Chapter {chapter_num} start")
 
     if files["final"].exists() and files["tts"].exists() and files["summary"].exists():
         _log(f"[RESUME] Chapter {chapter_num} reusing existing text artifacts")
@@ -900,12 +1164,20 @@ def run_chapter(chapter_num: int) -> None:
                 [files["final"], files["summary"], files["tts"], files["audio"]],
             )
 
+        _play_chapter_complete_alert(chapter_num)
         _log(f"[OK] Chapter {chapter_num} complete")
         return
 
     bible = _load("story_bible.json")
     characters = _load("characters.json")
-    style = _load_text("style_guide.txt")
+    style_raw = _load_text("style_guide.txt")
+    max_sg_chars = getattr(SETTINGS, "style_guide_max_chars", 0)
+    style = style_raw[:max_sg_chars] if max_sg_chars > 0 else style_raw
+    if max_sg_chars > 0 and len(style_raw) > max_sg_chars:
+        _log(
+            f"[DEBUG] Chapter {chapter_num} style guide truncated "
+            f"({len(style_raw)} -> {len(style)} chars)"
+        )
     checklist = _load_text("consistency_checklist.txt")
     first_chapter_guidance = _first_chapter_guidance(chapter_num)
     scene_zero = brief.get("scene_zero") or brief.get("opens_with") or ""
@@ -935,8 +1207,46 @@ def run_chapter(chapter_num: int) -> None:
     if first_chapter_guidance:
         context += "\n\nFIRST CHAPTER GUIDANCE (mandatory constraints):\n" + first_chapter_guidance
 
+    _debug_len(f"Chapter {chapter_num} context", context)
+    _log(f"[INFO] Chapter {chapter_num} scene plan generation started")
+
     scene_plan_md = _build_scene_plan(chapter_num, brief, context)
-    scenes = _parse_scene_plan(scene_plan_md)
+    _log(f"[INFO] Chapter {chapter_num} scene plan generation finished")
+    parse_attempt = 0
+    while True:
+        try:
+            scenes = _parse_scene_plan(scene_plan_md)
+            (_reviews_dir() / f"ch{chapter_num:02d}_scene_plan_normalized.md").write_text(
+                _render_scene_plan(scenes),
+                encoding="utf-8",
+            )
+            break
+        except RuntimeError as exc:
+            parse_attempt += 1
+            if parse_attempt > 2:
+                _log(
+                    f"[WARN] Scene plan remained unparsable after retries for chapter {chapter_num}; "
+                    "using brief-derived deterministic fallback scenes."
+                )
+                scenes = _fallback_scenes_from_brief(chapter_num, brief)
+                break
+            _log(f"[WARN] Scene plan parse failed for chapter {chapter_num}; requesting strict-format rewrite (attempt {parse_attempt}).")
+            try:
+                scene_plan_md = _rewrite_scene_plan(
+                    chapter_num=chapter_num,
+                    brief=brief,
+                    context=context,
+                    invalid_plan=scene_plan_md,
+                    parse_error=str(exc),
+                    attempt=parse_attempt,
+                )
+            except Exception as rewrite_exc:
+                _log(
+                    f"[WARN] Scene plan rewrite failed for chapter {chapter_num} on attempt {parse_attempt}: {rewrite_exc}. "
+                    "Falling back to deterministic brief-derived scenes."
+                )
+                scenes = _fallback_scenes_from_brief(chapter_num, brief)
+                break
 
     scene_texts: list[str] = []
     for idx, sc in enumerate(scenes, start=1):
@@ -1018,6 +1328,7 @@ CHAPTER:
         output_path=str(files["audio"]),
         chapter_num=chapter_num,
     )
+    _log(f"[INFO] Chapter {chapter_num} narration finished: {files['audio']}")
 
     if SETTINGS.pause_after_chapter_review:
         _require_manual_review(
@@ -1027,7 +1338,8 @@ CHAPTER:
             [files["final"], files["summary"], files["tts"], files["audio"]],
         )
 
-    _log(f"[OK] Chapter {chapter_num} complete")
+    _play_chapter_complete_alert(chapter_num)
+    _log(f"[OK] Chapter {chapter_num} complete in {max(0.0, time.time() - chapter_started):.1f}s")
 
 
 def run_all() -> None:
@@ -1038,15 +1350,52 @@ def run_all() -> None:
         _log(f"[INFO] Local disk-KV endpoint: {SETTINGS.local_disk_kv_url}")
         _log(f"[INFO] Local disk-KV model: {SETTINGS.local_disk_kv_model}")
     briefs = _load("chapter_briefs.json")
-    max_chapters = min(SETTINGS.chapter_count, len(briefs))
-    if max_chapters == 0:
+    max_available = min(SETTINGS.chapter_count, len(briefs))
+    if max_available == 0:
         raise RuntimeError("chapter_briefs.json is empty.")
 
-    for chapter_num in range(1, max_chapters + 1):
+    start_chapter = max(1, int(getattr(SETTINGS, "chapter_start", 1) or 1))
+    last_chapter = int(getattr(SETTINGS, "chapter_last", max_available) or max_available)
+    last_chapter = min(max_available, max(start_chapter, last_chapter))
+
+    if start_chapter > max_available:
+        raise RuntimeError(
+            f"CHAPTER_START={start_chapter} is beyond available chapters ({max_available})."
+        )
+
+    _log(f"[INFO] Chapter window: {start_chapter}-{last_chapter} (available={max_available})")
+
+    pending: list[int] = []
+    for chapter_num in range(start_chapter, last_chapter + 1):
         if _chapter_complete(chapter_num):
             _log(f"[SKIP] Chapter {chapter_num} already exists")
             continue
-        run_chapter(chapter_num)
+        pending.append(chapter_num)
+
+    if not pending:
+        return
+
+    workers = max(1, SETTINGS.chapter_concurrency)
+    if workers == 1:
+        for chapter_num in pending:
+            run_chapter(chapter_num)
+        return
+
+    _log(f"[INFO] Running {len(pending)} chapter(s) with chapter_concurrency={workers}")
+    failures: list[tuple[int, str]] = []
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        future_map = {pool.submit(run_chapter, chapter_num): chapter_num for chapter_num in pending}
+        for fut in as_completed(future_map):
+            chapter_num = future_map[fut]
+            try:
+                fut.result()
+            except Exception as exc:
+                failures.append((chapter_num, str(exc)))
+                _log(f"[ERROR] Chapter {chapter_num} failed in concurrent run: {exc}")
+
+    if failures:
+        details = "; ".join(f"ch{num:02d}: {msg}" for num, msg in failures)
+        raise RuntimeError(f"Concurrent run failed for {len(failures)} chapter(s): {details}")
 
 
 if __name__ == "__main__":

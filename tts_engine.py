@@ -191,6 +191,7 @@ def narrate_chapter(
     chapter_num: int,
     resume: bool = True,
 ) -> str:
+    started = time.time()
     client = _load_client()
     api_name = resolve_api_name(client)
 
@@ -201,6 +202,12 @@ def narrate_chapter(
     sentence_entries = _split_sentences_with_paragraph_breaks(text)
     if not sentence_entries:
         raise ValueError("No narratable sentences found.")
+
+    print(
+        f"[INFO] TTS chapter {chapter_num} start: sentences={len(sentence_entries)} "
+        f"voice={voice_sample} api={api_name} resume={resume}",
+        flush=True,
+    )
 
     source_hash = _source_fingerprint(sentence_entries)
 
@@ -254,6 +261,11 @@ def narrate_chapter(
         last_exc: Exception | None = None
         for attempt in range(1, SETTINGS.max_retries + 1):
             try:
+                print(
+                    f"[DEBUG] TTS chapter {chapter_num} sentence {i + 1}/{len(sentence_entries)} "
+                    f"attempt {attempt}/{SETTINGS.max_retries}",
+                    flush=True,
+                )
                 generated = _with_timeout(
                     SETTINGS.tts_sentence_timeout_seconds,
                     f"chapter {chapter_num} sentence {i}",
@@ -276,7 +288,7 @@ def narrate_chapter(
                 time.sleep(sleep_s)
 
         if last_exc is not None:
-            print(f"[WARN] Sentence {i} failed after retries: {last_exc}")
+            print(f"[WARN] TTS chapter {chapter_num} sentence {i + 1} failed after retries: {last_exc}", flush=True)
             failed.add(seg_name)
             manifest["failed"] = sorted(failed)
             manifest["last_error"] = f"sentence {i}: {last_exc}"
@@ -293,6 +305,11 @@ def narrate_chapter(
         segment_pads,
         Path(output_path),
         lead_in_seconds=max(0.0, SETTINGS.intro_lead_in_seconds),
+    )
+    print(
+        f"[INFO] TTS chapter {chapter_num} done: segments={len(segment_files)} "
+        f"output={output_path} elapsed={max(0.0, time.time() - started):.1f}s",
+        flush=True,
     )
     return output_path
 
