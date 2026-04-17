@@ -101,6 +101,7 @@ def _llm(phase: str, temp: float, max_tokens: int):
     client.set_role(phase)
     client.set_temperature(temp)
     client.set_max_output_tokens(max_tokens)
+    setattr(client, "_copilot_max_tokens", int(max_tokens))
     if getattr(SETTINGS, "use_compact_context", False):
         client.apply_preset("compact_context")
     return client
@@ -175,9 +176,10 @@ def _with_deadline(timeout_seconds: int, label: str, fn):
         signal.signal(signal.SIGALRM, previous_handler)
 
 
-def _invoke_guarded(client, prompt: str, *, label: str) -> str:
+def _invoke_guarded(client, prompt: str, *, label: str, retry_attempts: int | None = None) -> str:
     global _LAST_LLM_CALL_TS
-    total_attempts = max(1, SETTINGS.llm_call_retry_attempts + 1)
+    configured_retries = SETTINGS.llm_call_retry_attempts if retry_attempts is None else max(0, int(retry_attempts))
+    total_attempts = max(1, configured_retries + 1)
     last_exc: Exception | None = None
 
     for attempt in range(1, total_attempts + 1):
@@ -212,6 +214,19 @@ def _invoke_guarded(client, prompt: str, *, label: str) -> str:
             last_exc = exc
             elapsed = max(0.0, time.time() - started)
             _log(f"[WARN] {label} failed on attempt {attempt}/{total_attempts} after {elapsed:.1f}s: {exc}")
+            # After a timeout-like failure, reduce output token budget for subsequent retries.
+            timeout_like = isinstance(exc, LLMCallTimeoutError) or "timed out" in str(exc).lower() or "timeout" in str(exc).lower()
+            if timeout_like and hasattr(client, "set_max_output_tokens"):
+                current_cap = int(getattr(client, "_copilot_max_tokens", 0) or 0)
+                if current_cap > 0:
+                    lowered = max(350, int(current_cap * 0.75))
+                    if lowered < current_cap:
+                        try:
+                            client.set_max_output_tokens(lowered)
+                            setattr(client, "_copilot_max_tokens", lowered)
+                            _log(f"[WARN] {label} reducing max tokens for retry: {current_cap} -> {lowered}")
+                        except Exception:
+                            pass
             if attempt >= total_attempts:
                 break
             sleep_for = max(0.0, SETTINGS.llm_call_retry_backoff) * attempt
@@ -757,6 +772,7 @@ Respect style and continuity.
 - Do not use phrases like "this is only the beginning", "she was on a journey", "the story had only started", or references to reader/writer/prompt/model.
 - Do not use markdown separators such as "---", "***", or "~~~".
 - Return continuous prose only. No headings, bullet lists, labels, or markdown.
+- Never include directive meta-language from writing guides in the story text — words like "cliffhanger", instruction labels, or scene prompt headers must never appear in the narrative prose.
 - Avoid repeating sentence stems or rephrasing the same point across consecutive paragraphs.
 - Use varied sentence lengths and avoid reusing distinctive clauses from prior scenes.
 {opening_instruction}
@@ -906,6 +922,32 @@ def _guarantee_chapter1_opening_verb(chapter_text: str, decision_verbs: tuple[st
             "run": ("ran", "running", "runs"),
             "lie": ("lied", "lying", "lies"),
             "steal": ("stole", "stolen", "stealing", "steals"),
+            "confess": ("confessed", "confessing", "confesses"),
+            "refuse": ("refused", "refusing", "refuses"),
+            "decide": ("decided", "deciding", "decides"),
+            "agree": ("agreed", "agreeing", "agrees"),
+            "confront": ("confronted", "confronting", "confronts"),
+            "accept": ("accepted", "accepting", "accepts"),
+            "decline": ("declined", "declining", "declines"),
+            "promise": ("promised", "promising", "promises"),
+            "begin": ("began", "begun", "beginning", "begins"),
+            "leave": ("left", "leaving", "leaves"),
+            "take": ("took", "taken", "taking", "takes"),
+            "send": ("sent", "sending", "sends"),
+            "write": ("wrote", "written", "writing", "writes"),
+            "read": ("read", "reading", "reads"),
+            "hide": ("hid", "hidden", "hiding", "hides"),
+            "delete": ("deleted", "deleting", "deletes"),
+            "log": ("logged", "logging", "logs"),
+            "step": ("stepped", "stepping", "steps"),
+            "move": ("moved", "moving", "moves"),
+            "scan": ("scanned", "scanning", "scans"),
+            "press": ("pressed", "pressing", "presses"),
+            "reach": ("reached", "reaching", "reaches"),
+            "grab": ("grabbed", "grabbing", "grabs"),
+            "transmit": ("transmitted", "transmitting", "transmits"),
+            "activate": ("activated", "activating", "activates"),
+            "trigger": ("triggered", "triggering", "triggers"),
         }
         forms = irregular.get(base.lower(), ())
         return any(re.search(r"\b" + re.escape(form) + r"\b", opening_window) for form in forms)
@@ -934,7 +976,7 @@ def _guarantee_chapter1_opening_verb(chapter_text: str, decision_verbs: tuple[st
         elif "eye" in second_sent.lower():
             injected = f"She scanned the display. {second_sent}"
         else:
-            injected = f"They acted. {second_sent}"
+            injected = f"He stepped forward. {second_sent}"
         sentences[1] = injected
     
     new_first_para = " ".join(sentences)
@@ -1058,7 +1100,12 @@ CHAPTER:
 """
         expander = _llm("writer", temp=0.55, max_tokens=SETTINGS.expander_max_tokens)
         try:
-            out = _invoke_guarded(expander, expand_prompt, label=f"chapter {chapter_num} expansion")
+            out = _invoke_guarded(
+                expander,
+                expand_prompt,
+                label=f"chapter {chapter_num} expansion",
+                retry_attempts=0,
+            )
         except Exception as exc:
             _log(f"[WARN] Chapter {chapter_num} expansion call failed: {exc}")
             break
@@ -1213,6 +1260,7 @@ def run_chapter(chapter_num: int) -> None:
     scene_plan_md = _build_scene_plan(chapter_num, brief, context)
     _log(f"[INFO] Chapter {chapter_num} scene plan generation finished")
     parse_attempt = 0
+    max_plan_repairs = max(0, int(getattr(SETTINGS, "scene_plan_repair_attempts", 1) or 0))
     while True:
         try:
             scenes = _parse_scene_plan(scene_plan_md)
@@ -1223,7 +1271,7 @@ def run_chapter(chapter_num: int) -> None:
             break
         except RuntimeError as exc:
             parse_attempt += 1
-            if parse_attempt > 2:
+            if parse_attempt > max_plan_repairs:
                 _log(
                     f"[WARN] Scene plan remained unparsable after retries for chapter {chapter_num}; "
                     "using brief-derived deterministic fallback scenes."
