@@ -1,0 +1,21 @@
+{
+  "services": [
+    {
+      "name": "chatterbox",
+      "pid": 43376,
+      "cmd": [
+        "bash",
+        "scripts/start_chatterbox_webui.sh"
+      ]
+    },
+    {
+      "name": "story_studio",
+      "pid": 43377,
+      "cmd": [
+        "/Users/wes/Desktop/Story_Time/.venv/bin/python",
+        "app.py"
+      ]
+    }
+  ],
+  "updated_at": 1775676783
+}

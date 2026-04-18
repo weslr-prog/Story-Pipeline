@@ -10,10 +10,7 @@ For the local disk-backed KV direction and rollback path, also read:
 
 ## Backend selection (novel pipeline)
 
-`pipeline_novel.py` supports two backends:
-
-1. `local_disk_kv` (default)
-2. `openclaw` (fallback)
+`pipeline_novel.py` should run on `local_disk_kv` for the current no-OpenClaw workflow.
 
 Set in `.env`:
 
@@ -21,19 +18,20 @@ Set in `.env`:
 LLM_BACKEND=local_disk_kv
 USE_LOCAL_DISK_KV=0
 LOCAL_DISK_KV_URL=http://127.0.0.1:8080/v1/chat/completions
-LOCAL_DISK_KV_MODEL=llama3-turbo-disk
+LOCAL_DISK_KV_MODEL=caiovicentino1/Qwen3.5-9B-HLWQ-MLX-4bit
+LLM_MODEL=caiovicentino1/Qwen3.5-9B-HLWQ-MLX-4bit
+LLM_NUM_CTX=32768
+```
+
+Launch server:
+
+```bash
+bash scripts/start_mlx_server.sh
 ```
 
 Compatibility override:
 
 1. `USE_LOCAL_DISK_KV=1` forces local mode regardless of `LLM_BACKEND`.
-
-To revert to OpenClaw quickly:
-
-```dotenv
-LLM_BACKEND=openclaw
-USE_LOCAL_DISK_KV=0
-```
 
 ## 1) What must be running
 
@@ -303,7 +301,7 @@ python scripts/start_story_runner.py --stop
 ### Start Ollama model
 
 ```bash
-ollama pull qwen2.5:7b
+ollama pull qwen3.5:9b
 ```
 
 ### Start Chatterbox WebUI
@@ -348,7 +346,7 @@ CHATTERBOX_API=/generate
 The writing model is controlled by `.env`:
 
 ```dotenv
-LLM_MODEL=qwen2.5:7b
+LLM_MODEL=caiovicentino1/Qwen3.5-9B-HLWQ-MLX-4bit
 OLLAMA_URL=http://localhost:11434
 ```
 
@@ -359,25 +357,31 @@ To switch models:
 3. Re-run `python scripts/preflight.py`
 4. Run a short validation (1 chapter) before full runs
 
-For 16 GB Apple Silicon, keep all phases on the same smaller model first:
+For 16 GB Apple Silicon, start with the same primary model across phases:
 
 ```dotenv
-LLM_MODEL=qwen2.5:7b
-WRITER_MODEL=qwen2.5:7b
-EDITOR_MODEL=qwen2.5:7b
-CRITIC_MODEL=qwen2.5:7b
-ARCHIVIST_MODEL=qwen2.5:7b
-TTS_PREP_MODEL=qwen2.5:7b
+LLM_MODEL=qwen3.5:9b
+WRITER_MODEL=qwen3.5:9b
+EDITOR_MODEL=qwen3.5:9b
+CRITIC_MODEL=qwen3.5:9b
+ARCHIVIST_MODEL=qwen3.5:9b
+TTS_PREP_MODEL=qwen3.5:9b
 ```
 
 You can split model roles later by phase when stable.
 
 TurboQuant / disk-backed KV guidance:
 
-1. Keep `qwen2.5:7b` as baseline for reliability and quality balance.
-2. Move to TurboQuant disk-backed KV only after 1-3 chapter validation passes.
-3. Set `LLM_BACKEND=local_disk_kv`, `USE_LOCAL_DISK_KV=1`, and a valid `LOCAL_DISK_KV_MODEL` served by your local disk-KV endpoint.
+1. Use `qwen3.5:9b` as primary target with local disk-KV endpoint.
+2. Keep `qwen2.5:7b` as a contingency fallback if model alias compatibility blocks run completion.
+3. Set `LLM_BACKEND=local_disk_kv`, `USE_LOCAL_DISK_KV=0`, and a valid `LOCAL_DISK_KV_MODEL` served by your local endpoint.
 4. CYOA currently uses Ollama path (`OLLAMA_URL` + `LLM_MODEL`) and does not consume local_disk_kv backend settings.
+
+Concurrent chapter validation:
+
+```bash
+python run_validation.py --chapters 1,2 --workers 2
+```
 
 ## 7) TTS smoke test
 

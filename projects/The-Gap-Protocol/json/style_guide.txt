@@ -1,0 +1,24 @@
+POV and tense:
+- Third-person limited, primarily ### Minimum Cast: Protagonist, Antagonist, 2 Supporting, 1 Expendable, 1 Red Herring.
+- Past tense.
+
+Tone and prose control:
+- Point of View:** Third person limited, tightly focused on Aris Thorne. The reader knows only what Aris knows, feels only what he feels. The signal’s true nature remains ambiguous because Aris himself cannot be certain.
+- Tense:** Past tense. (e.g., “Aris pressed the headset against his ear. The signal repeated. It sounded the same. It was not the same.”)
+- Dialogue style:** Somewhere between short‑clipped and naturalistic. Characters say what they mean only when under pressure; otherwise, they deflect. Vann speaks in protocol fragments. Mira hides behind tech talk. Aris becomes more precise when he lies.
+- Pacing philosophy:** Ratchet and release (as per Genre Calibration Report). Odd chapters (1,3,5,7,9) advance tension through discovery or conflict. Even chapters (2,4,6,8,10) deepen interiority — doubt, memory, paranoia. The final two chapters (9–10) accelerate without release.
+- What this story does well:**
+- Atmosphere of isolation (sound, silence, the viewport)
+- Psychological dread (what the signal might be, not what it does)
+- Moral ambiguity (no clean choices)
+- Slow revelation (clues buried in routine logs)
+- What this story explicitly avoids (from Phase 1):**
+- Graphic violence (threat is implied, not shown)
+- Explicit sexual content
+
+Lead voice style:
+- ### Minimum Cast: Protagonist, Antagonist, 2 Supporting, 1 Expendable, 1 Red Herring: Soft‑spoken, precise, with a tendency to over‑explain. When stressed, his sentences become shorter. He rarely initiates physical contact. He laughs like someone who forgot how.
+
+Immersion rules:
+- No meta narration about prompt/model/author/reader.
+- Keep chapter endings consequence-driven and forward-pulling.

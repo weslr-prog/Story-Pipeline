@@ -1,0 +1,78 @@
+[2026-04-17 22:23:30] [INFO] LLM backend: local_disk_kv
+[2026-04-17 22:23:30] [INFO] Local disk-KV endpoint: http://127.0.0.1:11434/v1/chat/completions
+[2026-04-17 22:23:30] [INFO] Local disk-KV model: qwen2.5:7b-instruct-q5_K_M
+[2026-04-17 22:23:30] [INFO] Chapter window: 1-2 (available=10)
+[2026-04-17 22:23:30] [INFO] Chapter 1 start
+[2026-04-17 22:23:30] [DEBUG] Chapter 1 style guide truncated (37552 -> 4200 chars)
+[2026-04-17 22:23:30] [DEBUG] Chapter 1 context: 3,113 words  ~= 4,150 tokens
+[2026-04-17 22:23:30] [INFO] Chapter 1 scene plan generation started
+[2026-04-17 22:23:30] [DEBUG] chapter 1 scene planner start (attempt 1/2, prompt_words=3916, prompt_tokens~=5221, timeout=300s)
+[2026-04-17 22:23:30] [LOCAL_LLM] request start model=qwen2.5:7b-instruct-q5_K_M attempt=1/3 endpoint=http://127.0.0.1:11434/v1/chat/completions prompt_words=3916 prompt_tokens~=5221 request_tokens=1800 num_ctx=20480 timeout=300s
+[2026-04-17 22:27:07] [LOCAL_LLM] request success model=qwen2.5:7b-instruct-q5_K_M attempt=1/3 status=200 elapsed=217.0s
+[2026-04-17 22:27:07] [INFO] chapter 1 scene planner completed in 217.0s
+[2026-04-17 22:27:07] [INFO] Chapter 1 scene plan generation finished
+[2026-04-17 22:27:07] [WARN] Scene plan parse failed for chapter 1; requesting strict-format rewrite (attempt 1).
+[2026-04-17 22:27:07] [DEBUG] chapter 1 scene plan rewrite attempt 1 start (attempt 1/2, prompt_words=5069, prompt_tokens~=6758, timeout=300s)
+[2026-04-17 22:27:07] [LOCAL_LLM] request start model=qwen2.5:7b-instruct-q5_K_M attempt=1/3 endpoint=http://127.0.0.1:11434/v1/chat/completions prompt_words=5069 prompt_tokens~=6758 request_tokens=1400 num_ctx=20480 timeout=300s
+[2026-04-17 22:31:12] [LOCAL_LLM] request success model=qwen2.5:7b-instruct-q5_K_M attempt=1/3 status=200 elapsed=245.5s
+[2026-04-17 22:31:12] [INFO] chapter 1 scene plan rewrite attempt 1 completed in 245.5s
+[2026-04-17 22:31:12] [WARN] Scene plan remained unparsable after retries for chapter 1; using brief-derived deterministic fallback scenes.
+[2026-04-17 22:31:12] [INFO] Generating scene 1 of chapter 1
+[2026-04-17 22:31:12] [DEBUG] chapter 1 scene 1 writer start (attempt 1/2, prompt_words=3642, prompt_tokens~=4856, timeout=300s)
+[2026-04-17 22:31:12] [LOCAL_LLM] request start model=qwen2.5:7b-instruct-q5_K_M attempt=1/3 endpoint=http://127.0.0.1:11434/v1/chat/completions prompt_words=3642 prompt_tokens~=4856 request_tokens=1800 num_ctx=20480 timeout=300s
+[2026-04-17 22:34:41] [LOCAL_LLM] request success model=qwen2.5:7b-instruct-q5_K_M attempt=1/3 status=200 elapsed=208.7s
+[2026-04-17 22:34:41] [INFO] chapter 1 scene 1 writer completed in 208.7s
+[2026-04-17 22:34:41] [DEBUG] Scene draft (raw): 771 words  ~= 1,028 tokens
+[2026-04-17 22:34:41] [DEBUG] chapter 1 scene 1 editor start (attempt 1/2, prompt_words=941, prompt_tokens~=1254, timeout=300s)
+[2026-04-17 22:34:41] [LOCAL_LLM] request start model=qwen2.5:7b-instruct-q5_K_M attempt=1/3 endpoint=http://127.0.0.1:11434/v1/chat/completions prompt_words=941 prompt_tokens~=1254 request_tokens=1500 num_ctx=20480 timeout=300s
+[2026-04-17 22:36:21] [LOCAL_LLM] request success model=qwen2.5:7b-instruct-q5_K_M attempt=1/3 status=200 elapsed=99.8s
+[2026-04-17 22:36:21] [INFO] chapter 1 scene 1 editor completed in 99.8s
+[2026-04-17 22:36:21] [DEBUG] Scene edited: 475 words  ~= 633 tokens
+[2026-04-17 22:36:21] [INFO] Chapter 1 word count after enforcement: 475
+[2026-04-17 22:36:21] [DEBUG] Scene after expansion: 475 words  ~= 633 tokens
+[2026-04-17 22:36:21] [INFO] Generating scene 2 of chapter 1
+[2026-04-17 22:36:21] [DEBUG] chapter 1 scene 2 writer start (attempt 1/2, prompt_words=4072, prompt_tokens~=5429, timeout=300s)
+[2026-04-17 22:36:21] [LOCAL_LLM] request start model=qwen2.5:7b-instruct-q5_K_M attempt=1/3 endpoint=http://127.0.0.1:11434/v1/chat/completions prompt_words=4072 prompt_tokens~=5429 request_tokens=1800 num_ctx=20480 timeout=300s
+[2026-04-17 22:40:13] [LOCAL_LLM] request success model=qwen2.5:7b-instruct-q5_K_M attempt=1/3 status=200 elapsed=232.7s
+[2026-04-17 22:40:13] [INFO] chapter 1 scene 2 writer completed in 232.7s
+[2026-04-17 22:40:13] [DEBUG] Scene draft (raw): 891 words  ~= 1,188 tokens
+[2026-04-17 22:40:13] [DEBUG] chapter 1 scene 2 editor start (attempt 1/2, prompt_words=1528, prompt_tokens~=2037, timeout=300s)
+[2026-04-17 22:40:13] [LOCAL_LLM] request start model=qwen2.5:7b-instruct-q5_K_M attempt=1/3 endpoint=http://127.0.0.1:11434/v1/chat/completions prompt_words=1528 prompt_tokens~=2037 request_tokens=1500 num_ctx=20480 timeout=300s
+[2026-04-17 22:41:44] [LOCAL_LLM] request success model=qwen2.5:7b-instruct-q5_K_M attempt=1/3 status=200 elapsed=91.2s
+[2026-04-17 22:41:44] [INFO] chapter 1 scene 2 editor completed in 91.2s
+[2026-04-17 22:41:44] [DEBUG] Scene edited: 347 words  ~= 462 tokens
+[2026-04-17 22:41:44] [INFO] Chapter 1 word count after enforcement: 347
+[2026-04-17 22:41:44] [DEBUG] Scene after expansion: 347 words  ~= 462 tokens
+[2026-04-17 22:41:44] [INFO] Generating scene 3 of chapter 1
+[2026-04-17 22:41:44] [DEBUG] chapter 1 scene 3 writer start (attempt 1/2, prompt_words=4461, prompt_tokens~=5948, timeout=300s)
+[2026-04-17 22:41:44] [LOCAL_LLM] request start model=qwen2.5:7b-instruct-q5_K_M attempt=1/3 endpoint=http://127.0.0.1:11434/v1/chat/completions prompt_words=4461 prompt_tokens~=5948 request_tokens=1800 num_ctx=20480 timeout=300s
+[2026-04-17 22:45:19] [LOCAL_LLM] request success model=qwen2.5:7b-instruct-q5_K_M attempt=1/3 status=200 elapsed=214.9s
+[2026-04-17 22:45:19] [INFO] chapter 1 scene 3 writer completed in 214.9s
+[2026-04-17 22:45:19] [DEBUG] Scene draft (raw): 826 words  ~= 1,101 tokens
+[2026-04-17 22:45:19] [DEBUG] chapter 1 scene 3 editor start (attempt 1/2, prompt_words=1810, prompt_tokens~=2413, timeout=300s)
+[2026-04-17 22:45:19] [LOCAL_LLM] request start model=qwen2.5:7b-instruct-q5_K_M attempt=1/3 endpoint=http://127.0.0.1:11434/v1/chat/completions prompt_words=1810 prompt_tokens~=2413 request_tokens=1500 num_ctx=20480 timeout=300s
+[2026-04-17 22:46:45] [LOCAL_LLM] request success model=qwen2.5:7b-instruct-q5_K_M attempt=1/3 status=200 elapsed=85.3s
+[2026-04-17 22:46:45] [INFO] chapter 1 scene 3 editor completed in 85.3s
+[2026-04-17 22:46:45] [DEBUG] Scene edited: 304 words  ~= 405 tokens
+[2026-04-17 22:46:45] [INFO] Chapter 1 word count after enforcement: 304
+[2026-04-17 22:46:45] [DEBUG] Scene after expansion: 304 words  ~= 405 tokens
+[2026-04-17 22:46:45] [DEBUG] Full chapter (stitched): 1,126 words  ~= 1,501 tokens
+[2026-04-17 22:46:45] [INFO] Chapter 1 word count after enforcement: 1126
+[2026-04-17 22:46:45] [INFO] Chapter 1: applying deterministic repeated_sentences pruning
+[2026-04-17 22:46:45] [WARN] Chapter 1 dropped below target after repairs (855 < 1200); re-expanding.
+[2026-04-17 22:46:45] [DEBUG] chapter 1 expansion start (attempt 1/1, prompt_words=4035, prompt_tokens~=5380, timeout=300s)
+[2026-04-17 22:46:45] [LOCAL_LLM] request start model=qwen2.5:7b-instruct-q5_K_M attempt=1/3 endpoint=http://127.0.0.1:11434/v1/chat/completions prompt_words=4035 prompt_tokens~=5380 request_tokens=1400 num_ctx=20480 timeout=300s
+[2026-04-17 22:49:59] [LOCAL_LLM] request success model=qwen2.5:7b-instruct-q5_K_M attempt=1/3 status=200 elapsed=193.5s
+[2026-04-17 22:49:59] [INFO] chapter 1 expansion completed in 193.5s
+[2026-04-17 22:49:59] [INFO] Chapter 1 word count after enforcement: 778
+[2026-04-17 22:49:59] [INFO] Chapter 1: applying deterministic repeated_sentences pruning
+[2026-04-17 22:49:59] [DEBUG] chapter 1 lint repair start (attempt 1/2, prompt_words=4804, prompt_tokens~=6405, timeout=300s)
+[2026-04-17 22:49:59] [LOCAL_LLM] request start model=qwen2.5:7b-instruct-q5_K_M attempt=1/3 endpoint=http://127.0.0.1:11434/v1/chat/completions prompt_words=4804 prompt_tokens~=6405 request_tokens=1500 num_ctx=20480 timeout=300s
+[2026-04-17 22:53:12] [LOCAL_LLM] request success model=qwen2.5:7b-instruct-q5_K_M attempt=1/3 status=200 elapsed=192.7s
+[2026-04-17 22:53:12] [INFO] chapter 1 lint repair completed in 192.7s
+[2026-04-17 22:53:12] [DEBUG] chapter 1 lint repair start (attempt 1/2, prompt_words=4804, prompt_tokens~=6405, timeout=300s)
+[2026-04-17 22:53:12] [LOCAL_LLM] request start model=qwen2.5:7b-instruct-q5_K_M attempt=1/3 endpoint=http://127.0.0.1:11434/v1/chat/completions prompt_words=4804 prompt_tokens~=6405 request_tokens=1500 num_ctx=20480 timeout=300s
+[2026-04-17 22:56:24] [LOCAL_LLM] request success model=qwen2.5:7b-instruct-q5_K_M attempt=1/3 status=200 elapsed=192.0s
+[2026-04-17 22:56:24] [INFO] chapter 1 lint repair completed in 192.0s
+[2026-04-17 22:56:24] [DEBUG] chapter 1 lint repair start (attempt 1/2, prompt_words=4804, prompt_tokens~=6405, timeout=300s)
+[2026-04-17 22:56:24] [LOCAL_LLM] request start model=qwen2.5:7b-instruct-q5_K_M attempt=1/3 endpoint=http://127.0.0.1:11434/v1/chat/completions prompt_words=4804 prompt_tokens~=6405 request_tokens=1500 num_ctx=20480 timeout=300s

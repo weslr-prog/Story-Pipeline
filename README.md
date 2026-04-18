@@ -86,14 +86,26 @@ LLM_BACKEND=local_disk_kv
 USE_LOCAL_DISK_KV=0
 ```
 
-Set `LLM_BACKEND=openclaw` to revert.
+Recommended defaults for this path:
+
+```dotenv
+LOCAL_DISK_KV_MODEL=caiovicentino1/Qwen3.5-9B-HLWQ-MLX-4bit
+LLM_MODEL=caiovicentino1/Qwen3.5-9B-HLWQ-MLX-4bit
+LLM_NUM_CTX=32768
+```
+
+Start the MLX server for this model:
+
+```bash
+bash scripts/start_mlx_server.sh
+```
 
 ## 2) Start dependencies
 
 1. Start Ollama service and ensure model is present:
 
 ```bash
-ollama pull qwen2.5:7b
+ollama pull qwen3.5:9b
 ```
 
 2. Start Chatterbox Gradio UI (in your chosen chatterbox checkout).
@@ -184,15 +196,21 @@ When paused, a review packet is written under `reviews/chXX_*_review.md`. Edit J
 
 Stable low-load mode is now default for reliability on 16 GB systems:
 
-1. Moderate context (`LLM_NUM_CTX=8192`)
+1. Larger continuity context (`LLM_NUM_CTX=32768`)
 2. Lower word target pressure (`2000-2600` for validation)
 3. Bounded expansion/lint repair passes
 4. Safer TTS pacing with chapter intro lead-in and paragraph-aware pause control
 
 For first validation, keep `CHAPTER_COUNT` at `2` or `3` in `.env`, then scale up.
 
-Recommended baseline model on 16 GB Apple Silicon is `qwen2.5:7b`.
-If you need larger context, use TurboQuant disk-backed KV with `LOCAL_DISK_KV_MODEL` only after validating stability in short runs.
+Recommended primary model target on 16 GB Apple Silicon is `qwen3.5:9b` in local disk-KV mode.
+Use `qwen2.5:7b` as fallback only if model compatibility blocks completion.
+
+Concurrent two-chapter validation run:
+
+```bash
+python run_validation.py --chapters 1,2 --workers 2
+```
 
 ## 7) Run CYOA pipeline
 

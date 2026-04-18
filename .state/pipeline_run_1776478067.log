@@ -1,0 +1,10 @@
+[2026-04-17 22:07:47] [INFO] LLM backend: local_disk_kv
+[2026-04-17 22:07:47] [INFO] Local disk-KV endpoint: http://127.0.0.1:11434/v1/chat/completions
+[2026-04-17 22:07:47] [INFO] Local disk-KV model: qwen2.5:7b-instruct-q5_K_M
+[2026-04-17 22:07:47] [INFO] Chapter window: 1-2 (available=10)
+[2026-04-17 22:07:47] [INFO] Chapter 1 start
+[2026-04-17 22:07:47] [DEBUG] Chapter 1 style guide truncated (37552 -> 4200 chars)
+[2026-04-17 22:07:47] [DEBUG] Chapter 1 context: 3,113 words  ~= 4,150 tokens
+[2026-04-17 22:07:47] [INFO] Chapter 1 scene plan generation started
+[2026-04-17 22:07:47] [DEBUG] chapter 1 scene planner start (attempt 1/2, prompt_words=3916, prompt_tokens~=5221, timeout=300s)
+[2026-04-17 22:07:47] [LOCAL_LLM] request start model=qwen2.5:7b-instruct-q5_K_M attempt=1/3 endpoint=http://127.0.0.1:11434/v1/chat/completions prompt_words=3916 prompt_tokens~=5221 request_tokens=1800 num_ctx=20480 timeout=300s

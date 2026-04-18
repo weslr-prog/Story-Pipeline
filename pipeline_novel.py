@@ -502,9 +502,22 @@ CONTEXT:
 {context}
 """
     planner = _llm("editor", temp=0.3, max_tokens=1800)
-    scene_plan = _invoke_guarded(planner, plan_prompt, label=f"chapter {chapter_num} scene planner")
-    (_reviews_dir() / f"ch{chapter_num:02d}_scene_plan.md").write_text(scene_plan, encoding="utf-8")
-    return scene_plan
+    try:
+        scene_plan = _invoke_guarded(planner, plan_prompt, label=f"chapter {chapter_num} scene planner")
+        (_reviews_dir() / f"ch{chapter_num:02d}_scene_plan.md").write_text(scene_plan, encoding="utf-8")
+        return scene_plan
+    except Exception as exc:
+        _log(
+            f"[WARN] Scene planner failed for chapter {chapter_num}: {exc}. "
+            "Using deterministic brief-derived scene plan fallback."
+        )
+        scenes = _fallback_scenes_from_brief(chapter_num, brief)
+        fallback_plan = _render_scene_plan(scenes)
+        (_reviews_dir() / f"ch{chapter_num:02d}_scene_plan_fallback.md").write_text(
+            fallback_plan,
+            encoding="utf-8",
+        )
+        return fallback_plan
 
 
 def _rewrite_scene_plan(chapter_num: int, brief: dict, context: str, invalid_plan: str, parse_error: str, attempt: int) -> str:
@@ -984,6 +997,90 @@ def _guarantee_chapter1_opening_verb(chapter_text: str, decision_verbs: tuple[st
     return "\n\n".join(paragraphs)
 
 
+def _insert_missing_brief_events_plain(chapter_text: str, missing_events: list[str]) -> str:
+    if not missing_events:
+        return chapter_text
+
+    chapter_lower = chapter_text.lower()
+    inserts: list[str] = []
+
+    for raw_event in missing_events:
+        event = str(raw_event).strip()
+        if not event:
+            continue
+        if event.lower() in chapter_lower:
+            continue
+        inserts.append(event)
+        chapter_lower += "\n" + event.lower()
+
+    if not inserts:
+        return chapter_text
+
+    insert_block = "\n\n".join(inserts)
+    first_break = chapter_text.find("\n\n")
+    if first_break == -1:
+        base = chapter_text.strip()
+        if not base:
+            return insert_block
+        return f"{base}\n\n{insert_block}"
+
+    first_para = chapter_text[:first_break]
+    rest = chapter_text[first_break + 2 :]
+    return f"{first_para}\n\n{insert_block}\n\n{rest}"
+
+
+def _prune_repeated_sentence_occurrences(chapter_text: str, sentence: str, max_keep: int) -> str:
+    if max_keep < 0:
+        return chapter_text
+
+    def _canon(value: str) -> str:
+        normalized = re.sub(r"[^a-z0-9\s]", "", value.lower())
+        return re.sub(r"\s+", " ", normalized).strip()
+
+    target = _canon(sentence)
+    if not target:
+        return chapter_text
+
+    seen = 0
+    out_paras: list[str] = []
+    for para in chapter_text.split("\n\n"):
+        parts = re.split(r"(?<=[.!?])\s+", para)
+        kept: list[str] = []
+        for part in parts:
+            if not part.strip():
+                continue
+            if _canon(part) == target:
+                if seen >= max_keep:
+                    continue
+                seen += 1
+            kept.append(part)
+        out_paras.append(" ".join(kept).strip())
+
+    return "\n\n".join(p for p in out_paras if p)
+
+
+def _remove_meta_phrases(chapter_text: str, phrases: list[str]) -> str:
+    out = chapter_text
+    changed = False
+    for phrase in phrases:
+        p = str(phrase or "").strip()
+        if not p:
+            continue
+        pattern = re.compile(r"\b" + re.escape(p) + r"\b", flags=re.IGNORECASE)
+        out, count = pattern.subn("", out)
+        if count > 0:
+            changed = True
+
+    if not changed:
+        return chapter_text
+
+    # Clean up whitespace left by phrase removal.
+    out = re.sub(r"[ \t]{2,}", " ", out)
+    out = re.sub(r"\s+([,.;:!?])", r"\1", out)
+    out = re.sub(r"\n{3,}", "\n\n", out)
+    return out.strip()
+
+
 def _run_lint_repairs(chapter_num: int, chapter_text: str, brief: dict, context: str) -> str:
     if not SETTINGS.lint_enabled:
         return chapter_text
@@ -1004,8 +1101,111 @@ def _run_lint_repairs(chapter_num: int, chapter_text: str, brief: dict, context:
         if report.get("passed", False):
             return current
 
+        failing_checks = [c for c in report.get("checks", []) if not c.get("passed", False)]
+        failing_names = {str(c.get("name", "")) for c in failing_checks}
+
+        if failing_names == {"brief_event_flow"} and len(failing_checks) == 1:
+            violations = failing_checks[0].get("violations", {})
+            missing_events: list[str] = []
+            if isinstance(violations, dict):
+                missing_events = [
+                    str(item).strip()
+                    for item in (violations.get("missing_events") or [])
+                    if str(item).strip()
+                ]
+
+            if missing_events:
+                _log(
+                    f"[INFO] Chapter {chapter_num}: applying deterministic brief_event_flow insertion "
+                    f"for {len(missing_events)} missing events"
+                )
+                current = _insert_missing_brief_events_plain(current, missing_events)
+                current = _deduplicate_chapter(current)
+                report = lint_chapter(current, chapter_num=chapter_num, brief=brief, settings=settings)
+                (reviews_dir / f"ch{chapter_num:02d}_lint.json").write_text(
+                    json.dumps(report, indent=2), encoding="utf-8"
+                )
+                (reviews_dir / f"ch{chapter_num:02d}_lint.md").write_text(
+                    to_markdown(report), encoding="utf-8"
+                )
+                if report.get("passed", False):
+                    return current
+
+                failing_checks = [c for c in report.get("checks", []) if not c.get("passed", False)]
+                failing_names = {str(c.get("name", "")) for c in failing_checks}
+
+        repeated_check = next(
+            (c for c in failing_checks if str(c.get("name", "")) == "repeated_sentences"),
+            None,
+        )
+        if repeated_check is not None:
+            violations = repeated_check.get("violations", [])
+            changed = False
+            if isinstance(violations, list):
+                for item in violations:
+                    if not isinstance(item, dict):
+                        continue
+                    sentence = str(item.get("sentence", "")).strip()
+                    if not sentence:
+                        continue
+                    before = current
+                    current = _prune_repeated_sentence_occurrences(
+                        current,
+                        sentence,
+                        SETTINGS.max_sentence_repeat,
+                    )
+                    changed = changed or (current != before)
+
+            if changed:
+                _log(f"[INFO] Chapter {chapter_num}: applying deterministic repeated_sentences pruning")
+                current = _deduplicate_chapter(current)
+                report = lint_chapter(current, chapter_num=chapter_num, brief=brief, settings=settings)
+                (reviews_dir / f"ch{chapter_num:02d}_lint.json").write_text(
+                    json.dumps(report, indent=2), encoding="utf-8"
+                )
+                (reviews_dir / f"ch{chapter_num:02d}_lint.md").write_text(
+                    to_markdown(report), encoding="utf-8"
+                )
+                if report.get("passed", False):
+                    return current
+
+                failing_checks = [c for c in report.get("checks", []) if not c.get("passed", False)]
+                failing_names = {str(c.get("name", "")) for c in failing_checks}
+
+        meta_check = next(
+            (c for c in failing_checks if str(c.get("name", "")) == "meta_awareness"),
+            None,
+        )
+        if meta_check is not None:
+            violations = meta_check.get("violations", [])
+            phrases = [str(v).strip() for v in violations if str(v).strip()]
+            if phrases:
+                updated = _remove_meta_phrases(current, phrases)
+                if updated != current:
+                    _log(
+                        f"[INFO] Chapter {chapter_num}: applying deterministic meta_awareness cleanup "
+                        f"for {len(phrases)} phrase(s)"
+                    )
+                    current = _deduplicate_chapter(updated)
+                    report = lint_chapter(current, chapter_num=chapter_num, brief=brief, settings=settings)
+                    (reviews_dir / f"ch{chapter_num:02d}_lint.json").write_text(
+                        json.dumps(report, indent=2), encoding="utf-8"
+                    )
+                    (reviews_dir / f"ch{chapter_num:02d}_lint.md").write_text(
+                        to_markdown(report), encoding="utf-8"
+                    )
+                    if report.get("passed", False):
+                        return current
+
+                    failing_checks = [c for c in report.get("checks", []) if not c.get("passed", False)]
+                    failing_names = {str(c.get("name", "")) for c in failing_checks}
+
         # On final attempt for chapter 1, apply opening verb guarantee before giving up
-        if chapter_num == 1 and attempt >= SETTINGS.max_lint_repairs:
+        if (
+            chapter_num == 1
+            and attempt >= SETTINGS.max_lint_repairs
+            and "chapter1_opening_contract" in failing_names
+        ):
             _log(f"[INFO] Applying chapter1_opening_contract guarantee...")
             current = _guarantee_chapter1_opening_verb(current, settings.chapter1_decision_verbs)
             report = lint_chapter(current, chapter_num=chapter_num, brief=brief, settings=settings)
@@ -1023,8 +1223,6 @@ def _run_lint_repairs(chapter_num: int, chapter_text: str, brief: dict, context:
                 f"Chapter {chapter_num} failed lint checks after {SETTINGS.max_lint_repairs} repair attempts. "
                 f"See {reviews_dir / f'ch{chapter_num:02d}_lint.md'}"
             )
-
-        failing_checks = [c for c in report.get("checks", []) if not c.get("passed", False)]
 
         repair_prompt = f"""
 You are the Structural Repair Agent.

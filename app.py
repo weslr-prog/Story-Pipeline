@@ -8,11 +8,14 @@ import time
 import gradio as gr
 
 from ui.studio_backend import (
+    MODEL_PROFILE_CHOICES,
+    MODEL_PROFILE_QWEN25_Q5,
     approve_review_marker,
     clear_project_data,
     clear_run_logs,
     create_guide_template,
     create_project,
+    get_default_chapter_range,
     get_pipeline_runtime_snapshot,
     get_required_input_windows,
     get_service_status,
@@ -56,7 +59,7 @@ INPUT_CHOICES = [
     ("Story DNA Summary", "dna"),
     ("Story Bible", "bible"),
     ("Chapter Blueprint", "blueprint"),
-    ("Style Guide", "style_guide"),
+    ("Style Guide / Phase 4 Writing Prompts", "style_guide"),
     ("Consistency Checklist", "consistency"),
 ]
 
@@ -196,6 +199,7 @@ def _pick_port(host: str, preferred_port: int, max_port: int, strict_port: bool)
 
 def build_app() -> gr.Blocks:
     projects, active_project = refresh_projects()
+    default_start_chapter, default_last_chapter = get_default_chapter_range()
 
     with gr.Blocks(title="Story Studio") as demo:
         gr.Markdown("# Story Studio (Local v1)\nProject-first workflow with path-free conversion inputs.")
@@ -255,11 +259,11 @@ def build_app() -> gr.Blocks:
             dna_window = gr.Textbox(label="Story DNA Summary Slot", lines=8, interactive=False)
             bible_window = gr.Textbox(label="Story Bible Slot", lines=8, interactive=False)
             blueprint_window = gr.Textbox(label="Chapter Blueprint Slot", lines=8, interactive=False)
-            style_window = gr.Textbox(label="Style Guide Slot", lines=8, interactive=False)
+            style_window = gr.Textbox(label="Style Guide / Phase 4 Writing Prompts Slot", lines=8, interactive=False)
 
         with gr.Tab("Convert"):
             mode = gr.Radio(choices=["rule", "prompt", "hybrid"], value="rule", label="Conversion Mode")
-            gr.HTML(_tip("Conversion is locked until Story DNA, Story Bible, Chapter Blueprint, and Style Guide are all present and non-empty."))
+            gr.HTML(_tip("Conversion is locked until Story DNA, Story Bible, Chapter Blueprint, and Style Guide (or Phase 4 Writing Prompts) are all present and non-empty."))
             convert_btn = gr.Button("Run Conversion")
             convert_log = gr.Textbox(label="Conversion Log", lines=10, interactive=False)
 
@@ -307,7 +311,18 @@ def build_app() -> gr.Blocks:
                     value="Sequential",
                     label="Run Mode",
                 )
-                chapter_limit = gr.Number(value=10, precision=0, label="Chapter Limit")
+                model_profile = gr.Dropdown(
+                    choices=MODEL_PROFILE_CHOICES,
+                    value=MODEL_PROFILE_QWEN25_Q5,
+                    label="LLM Model Profile",
+                )
+                start_chapter = gr.Number(value=default_start_chapter, precision=0, label="Start Chapter")
+                last_chapter = gr.Number(value=default_last_chapter, precision=0, label="Last Chapter")
+                chapter_complete_alert = gr.Dropdown(
+                    choices=["Double Beep", "Gong", "Off"],
+                    value="Double Beep",
+                    label="Chapter Complete Alert",
+                )
                 one_chapter_target = gr.Number(value=1, precision=0, label="One Chapter Target", visible=False)
                 existing_chapter_action = gr.Dropdown(
                     choices=["Prompt each time", "Rebuild", "Skip", "Cancel"],
@@ -458,12 +473,15 @@ def build_app() -> gr.Blocks:
         def _start_run(
             project: str,
             mode_name: str,
-            limit: float,
+            model_choice: str,
+            start_num: float,
+            last_num: float,
             min_words: float,
             max_words: float,
             pace: float,
             target_chapter: float,
             chapter_exists_action: str,
+            alert_mode: str,
         ) -> str:
             min_i = int(min_words or 0)
             max_i = int(max_words or 0)
@@ -473,12 +491,15 @@ def build_app() -> gr.Blocks:
             return start_pipeline_run(
                 project,
                 mode_name,
-                int(limit or 0),
+                int(start_num or 0),
+                int(last_num or 0),
                 min_i,
                 max_i,
                 float(pace or 1.0),
                 target_i,
                 chapter_exists_action or "Prompt each time",
+                model_choice,
+                alert_mode,
             )
 
         def _run_mode_ui(mode_name: str):
@@ -513,12 +534,12 @@ def build_app() -> gr.Blocks:
                 bool(confirm_all),
             )
 
-        def _refresh_dashboard(limit: float) -> tuple[str, str, str, str]:
-            return get_pipeline_runtime_snapshot(int(limit or 0))
+        def _refresh_dashboard(start_num: float, last_num: float) -> tuple[str, str, str, str]:
+            return get_pipeline_runtime_snapshot(int(start_num or 0), int(last_num or 0))
 
-        def _clear_logs(limit: float) -> tuple[str, str, str, str, str]:
+        def _clear_logs(start_num: float, last_num: float) -> tuple[str, str, str, str, str]:
             msg = clear_run_logs()
-            phase, artifacts, packet, log = _refresh_dashboard(limit)
+            phase, artifacts, packet, log = _refresh_dashboard(start_num, last_num)
             return msg, phase, artifacts, packet, log
 
         def _auto_refresh_toggle(enabled: bool, seconds: float) -> tuple[gr.Timer, str]:
@@ -527,8 +548,8 @@ def build_app() -> gr.Blocks:
             status = f"Auto refresh {'enabled' if enabled else 'disabled'} ({sec}s)."
             return gr.Timer(value=sec, active=bool(enabled)), status
 
-        def _auto_refresh_pulse(limit: float) -> tuple[str, str, str, str]:
-            return _refresh_dashboard(limit)
+        def _auto_refresh_pulse(start_num: float, last_num: float) -> tuple[str, str, str, str]:
+            return _refresh_dashboard(start_num, last_num)
 
         def _auto_refresh_service() -> str:
             stamp = time.strftime("%H:%M:%S")
@@ -602,12 +623,15 @@ def build_app() -> gr.Blocks:
             inputs=[
                 project_dropdown,
                 run_mode,
-                chapter_limit,
+                model_profile,
+                start_chapter,
+                last_chapter,
                 word_target_min,
                 word_target_max,
                 narration_speed,
                 one_chapter_target,
                 existing_chapter_action,
+                chapter_complete_alert,
             ],
             outputs=[dashboard_status],
         )
@@ -619,13 +643,13 @@ def build_app() -> gr.Blocks:
         )
         refresh_dashboard_btn.click(
             _refresh_dashboard,
-            inputs=[chapter_limit],
+            inputs=[start_chapter, last_chapter],
             outputs=[phase_status, artifact_status, review_packet, run_log],
         )
         refresh_dashboard_btn.click(_service_status, inputs=[], outputs=[service_status])
         clear_run_logs_btn.click(
             _clear_logs,
-            inputs=[chapter_limit],
+            inputs=[start_chapter, last_chapter],
             outputs=[dashboard_status, phase_status, artifact_status, review_packet, run_log],
         )
 
@@ -642,7 +666,7 @@ def build_app() -> gr.Blocks:
             )
             refresh_timer.tick(
                 _auto_refresh_pulse,
-                inputs=[chapter_limit],
+                inputs=[start_chapter, last_chapter],
                 outputs=[phase_status, artifact_status, review_packet, run_log],
             )
             refresh_timer.tick(_auto_refresh_service, inputs=[], outputs=[service_status])

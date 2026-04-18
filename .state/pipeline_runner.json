@@ -1,0 +1,17 @@
+{
+  "pid": 23019,
+  "log_path": "/Users/wes/Desktop/Story_Time/.state/pipeline_run_1776481148.log",
+  "started_at": 1776481148.4604359,
+  "mode": "Chapter Range",
+  "chapter_limit": 2,
+  "start_chapter": 1,
+  "last_chapter": 2,
+  "target_chapter": 0,
+  "chapter_complete_alert": "double_beep",
+  "kv_cache_mode": "unknown",
+  "kv_cache_evidence": "no KV compression env flag detected in app process",
+  "project": "The-Gap-Protocol",
+  "model_profile": "Qwen2.5-7B-Instruct-Q5 (Ollama)",
+  "model_name": "qwen2.5:7b-instruct-q5_K_M",
+  "model_url": "http://127.0.0.1:11434/v1/chat/completions"
+}

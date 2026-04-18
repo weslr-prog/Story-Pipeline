@@ -1,0 +1,57 @@
+{
+  "updated_at": "2026-04-11",
+  "phase": "phase_2_runtime_validated",
+  "items": [
+    {
+      "id": "backup_gate",
+      "title": "Backup gate complete",
+      "status": "done",
+      "evidence": [
+        "git tag backup_pre_impl_20260410_190724",
+        "backups/pre_impl_20260410_190724.bundle",
+        "/Users/wes/Desktop/Story_Time_backup_20260410_190724.tar.gz",
+        "backups/pre_impl_20260410_190724.sha256"
+      ]
+    },
+    {
+      "id": "narration_integrity",
+      "title": "Narration manifest source fingerprint",
+      "status": "done",
+      "files": ["tts_engine.py"]
+    },
+    {
+      "id": "dashboard_refresh",
+      "title": "Dashboard auto-refresh and telemetry",
+      "status": "done",
+      "files": ["app.py", "ui/studio_backend.py"]
+    },
+    {
+      "id": "chapter1_contract",
+      "title": "FIRST_CHAPTER prompt + lint contract",
+      "status": "done",
+      "files": ["config.py", "pipeline_novel.py", "story_lint.py"]
+    },
+    {
+      "id": "chapter2_validation",
+      "title": "Run chapter 2 end-to-end validation",
+      "status": "done",
+      "evidence": [
+        "chapter2 run completed with narrated output",
+        "chapter3 run completed with narrated output",
+        "timestamped runtail logs confirmed"
+      ]
+    },
+    {
+      "id": "runtime_unblock",
+      "title": "Fix local LLM payload and retry behavior",
+      "status": "done",
+      "files": ["local_llm.py", "config.py"]
+    },
+    {
+      "id": "runlog_controls",
+      "title": "Add clear run logs control",
+      "status": "done",
+      "files": ["app.py", "ui/studio_backend.py"]
+    }
+  ]
+}

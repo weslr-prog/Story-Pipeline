@@ -5,8 +5,9 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 ROOT = Path(__file__).resolve().parent
-# Keep .env defaults, but allow explicitly exported env vars to take precedence at runtime.
-load_dotenv(ROOT / ".env", override=False)
+# .env is authoritative. Shell env vars are overridden so stale session exports
+# (e.g. LOCAL_DISK_KV_MODEL from a previous run) don't silently corrupt settings.
+load_dotenv(ROOT / ".env", override=True)
 
 
 def _env_float(name: str, default: float) -> float:
@@ -41,20 +42,22 @@ class Settings:
     llm_backend: str = os.getenv("LLM_BACKEND", "local_disk_kv")
     use_local_disk_kv: bool = _env_bool("USE_LOCAL_DISK_KV", False)
     local_disk_kv_url: str = os.getenv("LOCAL_DISK_KV_URL", "http://127.0.0.1:8080/v1/chat/completions")
-    local_disk_kv_model: str = os.getenv("LOCAL_DISK_KV_MODEL", "llama3-turbo-disk")
+    local_disk_kv_model: str = os.getenv("LOCAL_DISK_KV_MODEL", "caiovicentino1/Qwen3.5-9B-HLWQ-MLX-4bit")
 
     ollama_url: str = os.getenv("OLLAMA_URL", "http://localhost:11434")
-    llm_model: str = os.getenv("LLM_MODEL", "qwen2.5:7b")
+    llm_model: str = os.getenv("LLM_MODEL", "caiovicentino1/Qwen3.5-9B-HLWQ-MLX-4bit")
     writer_model: str = os.getenv("WRITER_MODEL", "")
     editor_model: str = os.getenv("EDITOR_MODEL", "")
     critic_model: str = os.getenv("CRITIC_MODEL", "")
     archivist_model: str = os.getenv("ARCHIVIST_MODEL", "")
     tts_prep_model: str = os.getenv("TTS_PREP_MODEL", "")
-    llm_num_ctx: int = _env_int("LLM_NUM_CTX", 8192)
-    llm_repeat_penalty: float = _env_float("LLM_REPEAT_PENALTY", 1.2)
+    llm_num_ctx: int = _env_int("LLM_NUM_CTX", 32768)
+    llm_repeat_penalty: float = _env_float("LLM_REPEAT_PENALTY", 1.25)
     llm_call_timeout_seconds: int = _env_int("LLM_CALL_TIMEOUT_SECONDS", 240)
     llm_call_retry_attempts: int = _env_int("LLM_CALL_RETRY_ATTEMPTS", 2)
     llm_call_retry_backoff: float = _env_float("LLM_CALL_RETRY_BACKOFF", 3.0)
+    llm_concurrency_limit: int = _env_int("LLM_CONCURRENCY_LIMIT", 2)
+    llm_min_request_interval_seconds: float = _env_float("LLM_MIN_REQUEST_INTERVAL_SECONDS", 0.20)
 
     chatterbox_url: str = os.getenv("CHATTERBOX_URL", "http://127.0.0.1:7860")
     chatterbox_api: str = os.getenv("CHATTERBOX_API", "")
@@ -65,15 +68,21 @@ class Settings:
     pause_before_narration_review: bool = _env_bool("PAUSE_BEFORE_NARRATION_REVIEW", True)
     pause_after_chapter_review: bool = _env_bool("PAUSE_AFTER_CHAPTER_REVIEW", True)
     require_prenarration_approval: bool = _env_bool("REQUIRE_PRENARRATION_APPROVAL", False)
+    auto_approve: bool = _env_bool("AUTO_APPROVE", False)
+    style_guide_max_chars: int = _env_int("STYLE_GUIDE_MAX_CHARS", 0)
 
     chapter_count: int = _env_int("CHAPTER_COUNT", 10)
+    chapter_start: int = _env_int("CHAPTER_START", 1)
+    chapter_last: int = _env_int("CHAPTER_LAST", 10)
+    chapter_concurrency: int = _env_int("CHAPTER_CONCURRENCY", 1)
+    scene_plan_repair_attempts: int = _env_int("SCENE_PLAN_REPAIR_ATTEMPTS", 1)
     word_target_min: int = _env_int("WORD_TARGET_MIN", 1800)
     word_target_max: int = _env_int("WORD_TARGET_MAX", 2400)
     target_minutes_min: float = _env_float("TARGET_MINUTES_MIN", 15.0)
     target_minutes_max: float = _env_float("TARGET_MINUTES_MAX", 20.0)
     assumed_wpm: int = _env_int("ASSUMED_WPM", 150)
     expansion_passes: int = _env_int("EXPANSION_PASSES", 2)
-    intra_chapter_context_chars: int = _env_int("INTRA_CHAPTER_CONTEXT_CHARS", 6000)
+    intra_chapter_context_chars: int = _env_int("INTRA_CHAPTER_CONTEXT_CHARS", 9000)
 
     writer_max_tokens: int = _env_int("WRITER_MAX_TOKENS", 2200)
     editor_max_tokens: int = _env_int("EDITOR_MAX_TOKENS", 2000)
@@ -125,6 +134,7 @@ class Settings:
     min_pause_end: float = _env_float("MIN_PAUSE_END", 0.16)
     min_pause_mid: float = _env_float("MIN_PAUSE_MID", 0.09)
     chapter_intro_enabled: bool = _env_bool("CHAPTER_INTRO_ENABLED", True)
+    chapter_complete_alert: str = os.getenv("CHAPTER_COMPLETE_ALERT", "double_beep")
 
     voice_sample: str = os.getenv("VOICE_SAMPLE", "voices/narrator.wav")
 

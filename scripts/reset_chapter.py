@@ -18,6 +18,7 @@ def _targets(ch: str) -> list[Path]:
         ROOT / "chapters" / f"{ch}_edited.txt",
         ROOT / "chapters" / f"{ch}_final.txt",
         ROOT / "chapters" / f"{ch}_tts.txt",
+        ROOT / "chapters" / "scenes" / ch,
         ROOT / "summaries" / f"{ch}_summary.txt",
         ROOT / "audio" / f"{ch}_narration.wav",
         ROOT / "audio" / "segments" / ch,

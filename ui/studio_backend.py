@@ -38,13 +38,45 @@ REQUIRED_SOURCE_KEYS = ["dna", "bible", "blueprint"]
 REQUIRED_CONVERSION_KEYS = ["dna", "bible", "blueprint", "style_guide"]
 REQUIRED_GUIDE_KEYS = ["style_guide", "consistency"]
 SUPPORTED_VOICE_EXTENSIONS = (".wav", ".mp3", ".flac", ".ogg", ".m4a")
+MODEL_PROFILE_QWEN35 = "Qwen3.5-9B Non-thinking (MLX)"
+MODEL_PROFILE_QWEN25_Q5 = "Qwen2.5-7B-Instruct-Q5 (Ollama)"
+MODEL_PROFILE_CHOICES = [MODEL_PROFILE_QWEN35, MODEL_PROFILE_QWEN25_Q5]
 LAST_SIGNAL_FILE_CANDIDATES = {
     "dna": ["Phase 1 - Story DNA Summary.txt", "Story DNA Summary.txt", "Story DNA.txt"],
     "bible": ["Phase 2 - Story Bible.txt", "Story Bible.txt"],
     "blueprint": ["Phase 3 - Chapter Blueprint.txt", "Chapter Blueprint.txt"],
-    "style_guide": ["style_guide.txt", "Writing Prompts.txt"],
+    "style_guide": [
+        "style_guide.txt",
+        "Phase 4 - Writing Prompts.txt",
+        "Writing Prompts.txt",
+    ],
     "consistency": ["consistency_checklist.txt"],
 }
+
+
+def _coerce_int(value: Any, default: int = 0) -> int:
+    try:
+        if value is None:
+            return default
+        if isinstance(value, str) and not value.strip():
+            return default
+        return int(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _model_profile_runtime(model_profile: str | None) -> tuple[str, str]:
+    chosen = (model_profile or "").strip()
+    if chosen == MODEL_PROFILE_QWEN35:
+        return (
+            os.getenv("QWEN35_MLX_URL", "http://127.0.0.1:8080/v1/chat/completions"),
+            os.getenv("QWEN35_MLX_MODEL", "caiovicentino1/Qwen3.5-9B-HLWQ-MLX-4bit"),
+        )
+    # Default to the lower-memory profile.
+    return (
+        os.getenv("QWEN25_OLLAMA_URL", "http://127.0.0.1:11434/v1/chat/completions"),
+        os.getenv("QWEN25_OLLAMA_MODEL", "qwen2.5:7b-instruct-q5_K_M"),
+    )
 
 STYLE_GUIDE_TEMPLATE = """# Style Guide\n\n## Narrative POV and Tense\n- Use third person limited (primarily protagonist).\n- Use past tense consistently.\n\n## Voice and Diction\n- Prefer concrete verbs and precise nouns over abstract phrasing.\n- Keep dialogue natural and subtext-forward; avoid exposition dumps.\n- Avoid meta commentary about writing process.\n\n## Scene Construction\n- Every scene must do at least one: advance plot, deepen character, or escalate tension.\n- Keep transitions clear in time/place without long setup paragraphs.\n- End chapters on consequence-driven forward pull.\n\n## Prohibited Patterns\n- No repeated paragraph loops.\n- No out-of-world references (AI/model/prompt/author language).\n- Avoid early reveal leaks from future chapters.\n"""
 
@@ -333,7 +365,7 @@ def run_conversion(project_name: str, mode: str) -> str:
         return (
             "Conversion locked. Missing required source text files:\n- "
             + "\n- ".join(missing)
-            + "\n\nRequired for conversion lock: Story DNA Summary, Story Bible, Chapter Blueprint, Style Guide."
+            + "\n\nRequired for conversion lock: Story DNA Summary, Story Bible, Chapter Blueprint, Style Guide (or Phase 4 Writing Prompts)."
         )
 
     paths = initialize_project(project_name)
@@ -467,9 +499,12 @@ def sync_project_json_to_root(project_name: str) -> str:
             copied.append(name)
 
     for key in ["style_guide", "consistency"]:
-        src = paths.json_dir / INPUT_FILES[key]
+        # Prefer explicit project input guides over converter-generated guides.
+        # This allows Phase 4 (Writing Prompts) mapped into style_guide slot to
+        # directly steer runtime output quality when present.
+        src = input_path(project_name, key)
         if not src.exists() or not src.read_text(encoding="utf-8", errors="replace").strip():
-            src = input_path(project_name, key)
+            src = paths.json_dir / INPUT_FILES[key]
         if src.exists() and src.read_text(encoding="utf-8", errors="replace").strip():
             out_name = "style_guide.txt" if key == "style_guide" else "consistency_checklist.txt"
             shutil.copyfile(src, ROOT / out_name)
@@ -616,7 +651,12 @@ def _runner_state() -> dict[str, Any]:
             "started_at": 0.0,
             "mode": "",
             "chapter_limit": 0,
+            "start_chapter": 1,
+            "last_chapter": 1,
             "target_chapter": 0,
+            "chapter_complete_alert": "double_beep",
+            "kv_cache_mode": "",
+            "kv_cache_evidence": "",
             "project": "",
         },
     )
@@ -699,7 +739,12 @@ def _reset_runner_state() -> None:
             "started_at": 0.0,
             "mode": "",
             "chapter_limit": 0,
+            "start_chapter": 1,
+            "last_chapter": 1,
             "target_chapter": 0,
+            "chapter_complete_alert": "double_beep",
+            "kv_cache_mode": "",
+            "kv_cache_evidence": "",
             "project": "",
         }
     )
@@ -717,6 +762,11 @@ def _max_known_chapters() -> int:
     except json.JSONDecodeError:
         pass
     return max(1, int(max_chapters))
+
+
+def get_default_chapter_range() -> tuple[int, int]:
+    last = _max_known_chapters()
+    return 1, last
 
 
 def _clear_root_runtime_outputs() -> int:
@@ -770,11 +820,11 @@ def _chapter_complete(chapter_num: int) -> bool:
     return True
 
 
-def _next_pending_chapter(chapter_limit: int) -> int:
-    for chapter_num in range(1, max(1, chapter_limit) + 1):
+def _next_pending_chapter(start_chapter: int, last_chapter: int) -> int:
+    for chapter_num in range(max(1, start_chapter), max(1, last_chapter) + 1):
         if not _chapter_complete(chapter_num):
             return chapter_num
-    return max(1, chapter_limit)
+    return max(1, last_chapter)
 
 
 def _chapter_completion_status(chapter_num: int) -> str:
@@ -828,6 +878,20 @@ def _resolved_backend() -> str:
     return backend
 
 
+def _kv_cache_status() -> tuple[str, str]:
+    configured_mode = (
+        os.getenv("OLLAMA_KV_CACHE_TYPE")
+        or os.getenv("LLAMA_CACHE_TYPE_V")
+        or os.getenv("KV_CACHE_TYPE")
+        or ""
+    ).strip()
+    if not configured_mode:
+        return "unknown", "no KV compression env flag detected in app process"
+    if configured_mode.lower().startswith("turbo"):
+        return configured_mode, "compression mode configured by env"
+    return configured_mode, "configured mode is not a turbo compression type"
+
+
 def get_service_status() -> str:
     backend = _resolved_backend()
     ffmpeg_ok, ffmpeg_detail = check_ffmpeg()
@@ -847,6 +911,8 @@ def get_service_status() -> str:
         f"- ffmpeg: {'OK' if ffmpeg_ok else 'MISSING'} ({ffmpeg_detail})",
         f"- chatterbox: {'OK' if chatterbox_ok else 'DOWN'} ({chatterbox_detail})",
     ]
+    kv_mode, kv_detail = _kv_cache_status()
+    lines.append(f"- kv cache compression: {kv_mode} ({kv_detail})")
     if backend == "local_disk_kv":
         lines.append(f"- local_disk_kv (required): {'OK' if local_kv_ok else 'DOWN'} ({local_kv_detail})")
         lines.append(f"- ollama (optional): {'OK' if ollama_ok else 'DOWN'} ({ollama_detail})")
@@ -901,6 +967,30 @@ def _env_limit(default_limit: int) -> int:
         return default_limit
 
 
+def _normalize_chapter_range(
+    requested_start: int,
+    requested_last: int,
+    available: int,
+    legacy_limit: int = 0,
+) -> tuple[int, int]:
+    if available <= 0:
+        return 1, 1
+
+    start = requested_start if requested_start > 0 else 1
+    if requested_last > 0:
+        last = requested_last
+    elif legacy_limit > 0:
+        last = legacy_limit
+    else:
+        last = available
+
+    start = min(max(1, start), available)
+    last = min(max(1, last), available)
+    if last < start:
+        last = start
+    return start, last
+
+
 def _latest_review_packet(chapter_num: int) -> Path | None:
     reviews = ROOT / SETTINGS.reviews_dir
     pre = reviews / f"ch{chapter_num:02d}_pre_narration_review.md"
@@ -950,44 +1040,77 @@ def _segment_manifest_status(chapter_num: int, tts_path: Path) -> str:
     )
 
 
-def get_pipeline_runtime_snapshot(chapter_limit: int) -> tuple[str, str, str, str]:
+def get_pipeline_runtime_snapshot(
+    start_chapter: int | str | None,
+    last_chapter: int | str | None,
+    chapter_limit: int | str | None = None,
+) -> tuple[str, str, str, str]:
     state = _runner_state()
     pid = state.get("pid")
     running = _running_pid(pid)
-    limit = chapter_limit if chapter_limit > 0 else int(state.get("chapter_limit") or _env_limit(SETTINGS.chapter_count))
+    available = _max_known_chapters()
+    requested_start = _coerce_int(start_chapter, default=0)
+    requested_last = _coerce_int(last_chapter, default=0)
+    legacy_limit = _coerce_int(chapter_limit, default=0)
+
+    state_start = _coerce_int(state.get("start_chapter"), default=1)
+    state_last = _coerce_int(state.get("last_chapter"), default=0)
+    if state_last <= 0:
+        state_limit = _coerce_int(state.get("chapter_limit"), default=_env_limit(SETTINGS.chapter_count))
+        state_start, state_last = _normalize_chapter_range(1, 0, available, state_limit)
+
+    if requested_start > 0 or requested_last > 0 or legacy_limit > 0:
+        run_start, run_last = _normalize_chapter_range(requested_start, requested_last, available, legacy_limit)
+    else:
+        run_start, run_last = _normalize_chapter_range(state_start, state_last, available)
+    total_in_range = max(1, run_last - run_start + 1)
 
     completed = 0
-    for chapter_num in range(1, max(1, limit) + 1):
+    for chapter_num in range(run_start, run_last + 1):
         if _chapter_complete(chapter_num):
             completed += 1
 
-    current = min(max(1, completed + 1), max(1, limit))
+    current = _next_pending_chapter(run_start, run_last)
     mode_name = str(state.get("mode") or "")
     selected_chapter = int(state.get("target_chapter") or 0)
     if mode_name.strip().lower().startswith("one") and selected_chapter > 0:
         current = selected_chapter
-    phase = _chapter_phase(current)
+    if completed >= total_in_range:
+        phase = "complete"
+    else:
+        phase = _chapter_phase(current)
     packet = _latest_review_packet(current)
     started_at = float(state.get("started_at") or 0.0)
     elapsed = _format_hms(time.time() - started_at) if running and started_at > 0 else "00:00"
 
     timing_text = "ETA unavailable"
-    done_durations = [_wav_seconds(_chapter_artifacts(i)["audio"]) for i in range(1, completed + 1)]
+    done_durations = [_wav_seconds(_chapter_artifacts(i)["audio"]) for i in range(run_start, run_last + 1)]
     done_durations = [v for v in done_durations if v > 0]
-    if done_durations and completed < limit:
+    if done_durations and completed < total_in_range:
         avg = sum(done_durations) / len(done_durations)
-        remaining = (limit - completed) * avg
+        remaining = (total_in_range - completed) * avg
         timing_text = f"Estimated narration remaining: {_format_hms(remaining)}"
 
     status_lines = [
         f"Runner: {'running' if running else 'idle'}",
         f"Mode: {mode_name or 'n/a'}",
         f"Elapsed: {elapsed}",
-        f"Chapter progress: {completed}/{limit}",
+        f"Chapter range: {run_start}-{run_last}",
+        f"Chapter progress: {completed}/{total_in_range}",
         f"Current chapter: {current}",
         f"Phase: {phase}",
         timing_text,
     ]
+    model_profile = str(state.get("model_profile") or "")
+    model_name = str(state.get("model_name") or "")
+    if model_profile:
+        status_lines.append(f"Model profile: {model_profile}")
+    if model_name:
+        status_lines.append(f"Model: {model_name}")
+    kv_mode = str(state.get("kv_cache_mode") or "")
+    kv_evidence = str(state.get("kv_cache_evidence") or "")
+    if kv_mode or kv_evidence:
+        status_lines.append(f"KV cache: {kv_mode or 'unknown'} ({kv_evidence or 'no evidence'})")
     if selected_chapter > 0:
         status_lines.append(
             f"Selected chapter status: ch{selected_chapter:02d} is {_chapter_completion_status(selected_chapter)}"
@@ -1051,12 +1174,16 @@ def _validate_root_pipeline_payload() -> list[str]:
 def start_pipeline_run(
     project_name: str,
     run_mode: str,
-    chapter_limit: int,
+    start_chapter: int | str | None,
+    last_chapter: int | str | None,
     word_target_min: int | None = None,
     word_target_max: int | None = None,
     narration_speed: float | None = None,
     target_chapter: int | None = None,
     existing_chapter_action: str = "Prompt each time",
+    model_profile: str = MODEL_PROFILE_QWEN25_Q5,
+    chapter_complete_alert: str = "double_beep",
+    chapter_limit: int | str | None = None,
 ) -> str:
     state = _runner_state()
     if _running_pid(state.get("pid")):
@@ -1076,17 +1203,21 @@ def start_pipeline_run(
     except json.JSONDecodeError:
         return "chapter_briefs.json is invalid JSON."
 
-    limit = chapter_limit if chapter_limit > 0 else _env_limit(SETTINGS.chapter_count)
-    limit = min(max(1, limit), max(1, available))
+    requested_start = _coerce_int(start_chapter, default=0)
+    requested_last = _coerce_int(last_chapter, default=0)
+    legacy_limit = _coerce_int(chapter_limit, default=0)
+    start_num, last_num = _normalize_chapter_range(requested_start, requested_last, max(1, available), legacy_limit)
 
     mode = (run_mode or "Ask Every Run").strip().lower()
     selected_target = 0
     if mode.startswith("one"):
-        if target_chapter is not None and int(target_chapter) > 0:
-            selected_target = min(max(1, int(target_chapter)), max(1, available))
+        requested_target = _coerce_int(target_chapter, default=0)
+        if requested_target > 0:
+            selected_target = min(max(1, requested_target), max(1, available))
         else:
-            selected_target = _next_pending_chapter(limit)
-        limit = selected_target
+            selected_target = _next_pending_chapter(start_num, last_num)
+        start_num = selected_target
+        last_num = selected_target
 
         action = (existing_chapter_action or "Prompt each time").strip().lower()
         chapter_has_outputs = _chapter_outputs_ready(selected_target)
@@ -1110,15 +1241,41 @@ def start_pipeline_run(
     else:
         clear_note = ""
 
+    ffmpeg_ok, ffmpeg_detail = check_ffmpeg()
+    if not ffmpeg_ok:
+        return f"Run blocked: ffmpeg is required ({ffmpeg_detail})."
+
+    chatterbox_ok, chatterbox_detail = check_chatterbox()
+    if not chatterbox_ok:
+        return f"Run blocked: chatterbox is unavailable ({chatterbox_detail})."
+
+    backend = _resolved_backend()
+    local_kv_ok, local_kv_detail = check_local_disk_kv()
+    ollama_ok, ollama_detail = check_ollama()
+    if backend == "local_disk_kv" and not local_kv_ok:
+        return f"Run blocked: local_disk_kv backend is unavailable ({local_kv_detail})."
+    if backend == "openclaw" and not ollama_ok:
+        return f"Run blocked: ollama is unavailable ({ollama_detail})."
+
     env = os.environ.copy()
     env["LLM_BACKEND"] = "local_disk_kv"
     env["USE_LOCAL_DISK_KV"] = "true"
-    env["LOCAL_DISK_KV_URL"] = SETTINGS.ollama_url.rstrip("/") + "/v1/chat/completions"
-    env["LOCAL_DISK_KV_MODEL"] = SETTINGS.llm_model
+    endpoint, model_name = _model_profile_runtime(model_profile)
+    env["LOCAL_DISK_KV_URL"] = endpoint
+    env["LOCAL_DISK_KV_MODEL"] = model_name
+    env["LLM_MODEL"] = model_name
     env["EXPANSION_PASSES"] = "0"
-    env["CHAPTER_COUNT"] = str(limit)
+    env["CHAPTER_START"] = str(start_num)
+    env["CHAPTER_LAST"] = str(last_num)
+    env["CHAPTER_COUNT"] = str(last_num)
     env["PAUSE_BEFORE_NARRATION_REVIEW"] = "false"
     env["PAUSE_AFTER_CHAPTER_REVIEW"] = "false"
+    alert_mode = (chapter_complete_alert or "double_beep").strip().lower().replace(" ", "_")
+    if alert_mode not in {"double_beep", "gong", "off"}:
+        alert_mode = "double_beep"
+    env["CHAPTER_COMPLETE_ALERT"] = alert_mode
+
+    kv_mode, kv_evidence = _kv_cache_status()
 
     explicit_word_targets = False
     if word_target_min is not None and int(word_target_min) > 0:
@@ -1154,13 +1311,24 @@ def start_pipeline_run(
             "log_path": str(log_path),
             "started_at": time.time(),
             "mode": run_mode,
-            "chapter_limit": limit,
+            "chapter_limit": last_num,
+            "start_chapter": start_num,
+            "last_chapter": last_num,
             "target_chapter": selected_target,
+            "chapter_complete_alert": alert_mode,
+            "kv_cache_mode": kv_mode,
+            "kv_cache_evidence": kv_evidence,
             "project": project_name,
+            "model_profile": model_profile,
+            "model_name": model_name,
+            "model_url": endpoint,
         }
     )
     update_session(project_name, active_stage="running", pause_reason="", last_run_started_at=str(int(time.time())))
-    return f"Pipeline started (pid={process.pid}) with chapter limit {limit}. Log: {log_path}.{clear_note}"
+    return (
+        f"Pipeline started (pid={process.pid}) for chapters {start_num}-{last_num}. "
+        f"Alert: {alert_mode}. KV cache: {kv_mode or 'unknown'}. Log: {log_path}.{clear_note}"
+    )
 
 
 def stop_pipeline_run(project_name: str) -> str:

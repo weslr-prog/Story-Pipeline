@@ -1,0 +1,23 @@
+Canon lock:
+- Character names, roles, and voice styles remain aligned to characters.json.
+- Setting/world rules remain aligned to story_bible.json.
+
+Chapter continuity:
+- Each chapter follows chapter_briefs sequencing and target tension.
+- Cause/effect from prior chapter remains intact.
+- No contradictions in timeline, location, injury, or possession state.
+
+Character integrity:
+- Dialogue and choices remain consistent with established flaws and motivations.
+- No unexplained knowledge jumps before canonical reveal.
+
+Quality gates:
+- No duplicated paragraphs/sentences.
+- No meta-awareness language.
+- End on a clear consequence-driven continuation hook.
+
+Character roster lock:
+- ### Minimum Cast: Protagonist, Antagonist, 2 Supporting, 1 Expendable, 1 Red Herring
+
+Coverage target:
+- Checklist applies across 10 planned chapters.

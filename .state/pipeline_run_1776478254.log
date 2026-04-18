@@ -1,0 +1,87 @@
+[2026-04-17 22:10:54] [INFO] LLM backend: local_disk_kv
+[2026-04-17 22:10:54] [INFO] Local disk-KV endpoint: http://127.0.0.1:11434/v1/chat/completions
+[2026-04-17 22:10:54] [INFO] Local disk-KV model: qwen2.5:7b-instruct-q5_K_M
+[2026-04-17 22:10:54] [INFO] Chapter window: 1-2 (available=10)
+[2026-04-17 22:10:54] [INFO] Chapter 1 start
+[2026-04-17 22:10:54] [DEBUG] Chapter 1 style guide truncated (37552 -> 4200 chars)
+[2026-04-17 22:10:54] [DEBUG] Chapter 1 context: 3,113 words  ~= 4,150 tokens
+[2026-04-17 22:10:54] [INFO] Chapter 1 scene plan generation started
+[2026-04-17 22:10:54] [DEBUG] chapter 1 scene planner start (attempt 1/2, prompt_words=3916, prompt_tokens~=5221, timeout=300s)
+[2026-04-17 22:10:54] [LOCAL_LLM] request start model=qwen2.5:7b-instruct-q5_K_M attempt=1/3 endpoint=http://127.0.0.1:11434/v1/chat/completions prompt_words=3916 prompt_tokens~=5221 request_tokens=1800 num_ctx=20480 timeout=300s
+[2026-04-17 22:15:54] [WARN] chapter 1 scene planner failed on attempt 1/2 after 300.0s: chapter 1 scene planner exceeded 300s
+[2026-04-17 22:15:54] [WARN] chapter 1 scene planner reducing max tokens for retry: 1800 -> 1350
+[2026-04-17 22:15:57] [DEBUG] chapter 1 scene planner start (attempt 2/2, prompt_words=3916, prompt_tokens~=5221, timeout=300s)
+[2026-04-17 22:15:57] [LOCAL_LLM] request start model=qwen2.5:7b-instruct-q5_K_M attempt=1/3 endpoint=http://127.0.0.1:11434/v1/chat/completions prompt_words=3916 prompt_tokens~=5221 request_tokens=1350 num_ctx=20480 timeout=300s
+[2026-04-17 22:20:57] [WARN] chapter 1 scene planner failed on attempt 2/2 after 300.0s: chapter 1 scene planner exceeded 300s
+[2026-04-17 22:20:57] [WARN] chapter 1 scene planner reducing max tokens for retry: 1350 -> 1012
+Traceback (most recent call last):
+  File "/Users/wes/Desktop/Story_Time/pipeline_novel.py", line 205, in _invoke_guarded
+    result = _with_deadline(
+             ^^^^^^^^^^^^^^^
+  File "/Users/wes/Desktop/Story_Time/pipeline_novel.py", line 173, in _with_deadline
+    return fn()
+           ^^^^
+  File "/Users/wes/Desktop/Story_Time/pipeline_novel.py", line 208, in <lambda>
+    lambda: _invoke(client, prompt),
+            ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/wes/Desktop/Story_Time/pipeline_novel.py", line 111, in _invoke
+    resp = client.invoke(prompt)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/wes/Desktop/Story_Time/local_llm.py", line 145, in invoke
+    resp = requests.post(endpoint, headers=self._headers, json=payload, timeout=DEFAULT_TIMEOUT)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/wes/Desktop/Story_Time/.venv/lib/python3.11/site-packages/requests/api.py", line 115, in post
+    return request("post", url, data=data, json=json, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/wes/Desktop/Story_Time/.venv/lib/python3.11/site-packages/requests/api.py", line 59, in request
+    return session.request(method=method, url=url, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/wes/Desktop/Story_Time/.venv/lib/python3.11/site-packages/requests/sessions.py", line 592, in request
+    resp = self.send(prep, **send_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/wes/Desktop/Story_Time/.venv/lib/python3.11/site-packages/requests/sessions.py", line 706, in send
+    r = adapter.send(request, **kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/wes/Desktop/Story_Time/.venv/lib/python3.11/site-packages/requests/adapters.py", line 645, in send
+    resp = conn.urlopen(
+           ^^^^^^^^^^^^^
+  File "/Users/wes/Desktop/Story_Time/.venv/lib/python3.11/site-packages/urllib3/connectionpool.py", line 787, in urlopen
+    response = self._make_request(
+               ^^^^^^^^^^^^^^^^^^^
+  File "/Users/wes/Desktop/Story_Time/.venv/lib/python3.11/site-packages/urllib3/connectionpool.py", line 534, in _make_request
+    response = conn.getresponse()
+               ^^^^^^^^^^^^^^^^^^
+  File "/Users/wes/Desktop/Story_Time/.venv/lib/python3.11/site-packages/urllib3/connection.py", line 571, in getresponse
+    httplib_response = super().getresponse()
+                       ^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.11/3.11.15/Frameworks/Python.framework/Versions/3.11/lib/python3.11/http/client.py", line 1415, in getresponse
+    response.begin()
+  File "/opt/homebrew/Cellar/python@3.11/3.11.15/Frameworks/Python.framework/Versions/3.11/lib/python3.11/http/client.py", line 330, in begin
+    version, status, reason = self._read_status()
+                              ^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.11/3.11.15/Frameworks/Python.framework/Versions/3.11/lib/python3.11/http/client.py", line 291, in _read_status
+    line = str(self.fp.readline(_MAXLINE + 1), "iso-8859-1")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.11/3.11.15/Frameworks/Python.framework/Versions/3.11/lib/python3.11/socket.py", line 718, in readinto
+    return self._sock.recv_into(b)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/wes/Desktop/Story_Time/pipeline_novel.py", line 167, in _handle_timeout
+    raise LLMCallTimeoutError(f"{label} exceeded {timeout_seconds}s")
+LLMCallTimeoutError: chapter 1 scene planner exceeded 300s
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/wes/Desktop/Story_Time/pipeline_novel.py", line 1585, in <module>
+    run_all()
+  File "/Users/wes/Desktop/Story_Time/pipeline_novel.py", line 1564, in run_all
+    run_chapter(chapter_num)
+  File "/Users/wes/Desktop/Story_Time/pipeline_novel.py", line 1395, in run_chapter
+    scene_plan_md = _build_scene_plan(chapter_num, brief, context)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/wes/Desktop/Story_Time/pipeline_novel.py", line 505, in _build_scene_plan
+    scene_plan = _invoke_guarded(planner, plan_prompt, label=f"chapter {chapter_num} scene planner")
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/wes/Desktop/Story_Time/pipeline_novel.py", line 236, in _invoke_guarded
+    raise RuntimeError(f"{label} failed after {total_attempts} attempts: {last_exc}") from last_exc
+RuntimeError: chapter 1 scene planner failed after 2 attempts: chapter 1 scene planner exceeded 300s
