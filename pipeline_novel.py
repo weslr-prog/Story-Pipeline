@@ -317,6 +317,43 @@ _CHAPTER_WORDS = {
 }
 
 _CHAPTER_INTRO_RE = re.compile(r"^\s*chapter\s+[a-z0-9-]+\s*:\s*.+?[.!?]\s*$", flags=re.IGNORECASE)
+_CLOSURE_STOPWORDS = {
+    "a",
+    "an",
+    "and",
+    "are",
+    "as",
+    "at",
+    "be",
+    "by",
+    "for",
+    "from",
+    "had",
+    "has",
+    "have",
+    "he",
+    "her",
+    "his",
+    "in",
+    "into",
+    "is",
+    "it",
+    "its",
+    "of",
+    "on",
+    "or",
+    "she",
+    "that",
+    "the",
+    "their",
+    "them",
+    "they",
+    "this",
+    "to",
+    "was",
+    "were",
+    "with",
+}
 
 
 def _sanitize_runtime_prompt_text(text: str) -> str:
@@ -388,6 +425,251 @@ def _ensure_complete_sentence_ending(text: str) -> str:
         return candidate[: matches[-1].end()].rstrip()
 
     return candidate + "."
+
+
+def _chapter_closure_guard_mode() -> str:
+    mode = str(getattr(SETTINGS, "chapter_closure_guard_mode", "hybrid") or "hybrid").strip().lower()
+    if mode not in {"off", "none", "deterministic", "llm", "hybrid"}:
+        return "hybrid"
+    return "off" if mode == "none" else mode
+
+
+def _tail_excerpt(text: str, paragraph_count: int) -> str:
+    if paragraph_count <= 0:
+        return ""
+    paragraphs = [p.strip() for p in (text or "").split("\n\n") if p.strip()]
+    if not paragraphs:
+        return ""
+    return "\n\n".join(paragraphs[-paragraph_count:]).strip()
+
+
+def _keyword_tokens(text: str) -> set[str]:
+    words = re.findall(r"[a-zA-Z][a-zA-Z0-9'-]+", (text or "").lower())
+    return {w for w in words if len(w) >= 4 and w not in _CLOSURE_STOPWORDS}
+
+
+def _keyword_overlap_ratio(reference_text: str, candidate_text: str) -> float:
+    reference = _keyword_tokens(reference_text)
+    if not reference:
+        return 1.0
+    candidate = _keyword_tokens(candidate_text)
+    if not candidate:
+        return 0.0
+    return len(reference.intersection(candidate)) / float(len(reference))
+
+
+def _deterministic_closure_assessment(chapter_text: str, brief: dict) -> dict:
+    tail = _tail_excerpt(chapter_text, max(1, int(getattr(SETTINGS, "chapter_closure_tail_paragraphs", 3) or 3)))
+    ending_hint = str(brief.get("ends_with") or "").strip()
+    overlap = _keyword_overlap_ratio(ending_hint, tail)
+    min_tail_words = max(1, int(getattr(SETTINGS, "chapter_closure_min_tail_words", 55) or 55))
+    min_overlap = max(0.0, float(getattr(SETTINGS, "chapter_closure_min_keyword_overlap", 0.18) or 0.18))
+    require_anchor = bool(getattr(SETTINGS, "chapter_closure_require_brief_anchor", True))
+
+    issues: list[str] = []
+    if _word_count(tail) < min_tail_words:
+        issues.append(f"tail_too_short:{_word_count(tail)}<{min_tail_words}")
+    if not re.search(r"[.!?][\"')\]]*\s*$", tail):
+        issues.append("tail_missing_terminal_punctuation")
+    if re.search(r"\b(to be continued|the end)\b", tail, flags=re.IGNORECASE):
+        issues.append("generic_terminal_phrase")
+    if require_anchor and ending_hint and overlap < min_overlap:
+        issues.append(f"brief_anchor_weak:{overlap:.2f}<{min_overlap:.2f}")
+
+    return {
+        "passes": not issues,
+        "issues": issues,
+        "ending_hint": ending_hint,
+        "tail_excerpt": tail,
+        "tail_words": _word_count(tail),
+        "keyword_overlap": round(overlap, 3),
+    }
+
+
+def _extract_json_object(raw: str) -> str:
+    candidate = (raw or "").strip()
+    fence = re.search(r"```(?:json)?\s*(\{.*\})\s*```", candidate, flags=re.IGNORECASE | re.DOTALL)
+    if fence:
+        return fence.group(1).strip()
+    start = candidate.find("{")
+    end = candidate.rfind("}")
+    if start >= 0 and end > start:
+        return candidate[start : end + 1]
+    return candidate
+
+
+def _llm_closure_assessment(chapter_num: int, chapter_text: str, brief: dict, context: str) -> dict:
+    tail = _tail_excerpt(chapter_text, max(1, int(getattr(SETTINGS, "chapter_closure_tail_paragraphs", 3) or 3)))
+    prompt = f"""
+You are the Chapter Closure Critic.
+Evaluate whether this chapter ending is narratively complete and distinct.
+
+Rules:
+- Check the final beat has concrete consequence and emotional shift.
+- Check the ending aligns with ENDING TARGET from the chapter brief.
+- Check the ending is not abrupt or generic.
+- Output STRICT JSON only with keys:
+  passes (boolean), issues (array of short strings), rationale (string <= 60 words)
+
+ENDING TARGET:
+{str(brief.get("ends_with") or "").strip()}
+
+TAIL EXCERPT:
+{tail}
+
+FULL CHAPTER:
+{chapter_text}
+
+CONTEXT (for consistency only):
+{_sanitize_runtime_prompt_text(context)[:5000]}
+"""
+    critic = _llm("critic", temp=0.2, max_tokens=max(300, int(getattr(SETTINGS, "chapter_closure_llm_max_tokens", 650) or 650)))
+    try:
+        raw = _invoke_guarded(
+            critic,
+            prompt,
+            label=f"chapter {chapter_num} closure assessment",
+            retry_attempts=0,
+        )
+        payload = json.loads(_extract_json_object(raw))
+        issues = [str(item).strip() for item in (payload.get("issues") or []) if str(item).strip()]
+        return {
+            "passes": bool(payload.get("passes", False)),
+            "issues": issues,
+            "rationale": str(payload.get("rationale", "")).strip(),
+            "raw": raw,
+        }
+    except Exception as exc:
+        return {
+            "passes": False,
+            "issues": [f"closure_assessment_error:{exc}"],
+            "rationale": "",
+            "raw": "",
+        }
+
+
+def _rewrite_chapter_ending(
+    chapter_num: int,
+    chapter_text: str,
+    brief: dict,
+    context: str,
+    issues: list[str],
+) -> str:
+    tail_paragraphs = max(1, int(getattr(SETTINGS, "chapter_closure_tail_paragraphs", 3) or 3))
+    paragraphs = [p.strip() for p in chapter_text.split("\n\n") if p.strip()]
+    if not paragraphs:
+        return chapter_text
+
+    split_at = max(0, len(paragraphs) - tail_paragraphs)
+    head = "\n\n".join(paragraphs[:split_at]).strip()
+    tail = "\n\n".join(paragraphs[split_at:]).strip()
+    prompt = f"""
+You are the Ending Rewrite Agent.
+Rewrite ONLY the chapter ending section so it lands as a distinct, complete chapter ending.
+
+Hard constraints:
+- Keep all established facts and continuity.
+- Preserve character names, setting, and timeline.
+- Anchor the final beat to ENDING TARGET.
+- End with concrete consequence and forward pressure.
+- Do not add markdown, labels, bullets, or commentary.
+- Return only revised ending paragraphs.
+
+ENDING ISSUES TO FIX:
+{json.dumps(issues, indent=2)}
+
+ENDING TARGET:
+{str(brief.get("ends_with") or "").strip()}
+
+IMMUTABLE CHAPTER HEAD (do not rewrite):
+{head}
+
+CURRENT ENDING TO REWRITE:
+{tail}
+
+CONTEXT:
+{_sanitize_runtime_prompt_text(context)[:6000]}
+"""
+    rewriter = _llm("editor", temp=0.38, max_tokens=max(500, int(getattr(SETTINGS, "editor_max_tokens", 2000) or 2000)))
+    rewritten_tail = _invoke_guarded(
+        rewriter,
+        prompt,
+        label=f"chapter {chapter_num} ending rewrite",
+        retry_attempts=0,
+    )
+    rewritten_tail = re.sub(r"^```(?:text|markdown)?\s*", "", rewritten_tail.strip(), flags=re.IGNORECASE)
+    rewritten_tail = re.sub(r"\s*```$", "", rewritten_tail, flags=re.IGNORECASE)
+    rewritten_tail = _ensure_complete_sentence_ending(rewritten_tail)
+    if not rewritten_tail:
+        return chapter_text
+    if not head:
+        return rewritten_tail
+    return _ensure_complete_sentence_ending(f"{head}\n\n{rewritten_tail}")
+
+
+def _apply_chapter_closure_guard(chapter_num: int, chapter_text: str, brief: dict, context: str) -> str:
+    mode = _chapter_closure_guard_mode()
+    if mode == "off":
+        return chapter_text
+
+    current = _ensure_complete_sentence_ending(chapter_text)
+    max_rewrites = max(0, int(getattr(SETTINGS, "chapter_closure_rewrite_attempts", 1) or 1))
+    require_llm_verify = bool(getattr(SETTINGS, "chapter_closure_llm_verify", True))
+    report_path = _reviews_dir() / f"ch{chapter_num:02d}_closure.json"
+
+    for attempt in range(0, max_rewrites + 1):
+        deterministic = _deterministic_closure_assessment(current, brief)
+        llm_result = None
+
+        should_run_llm = mode == "llm" or (mode == "hybrid" and (require_llm_verify or not deterministic["passes"]))
+        if should_run_llm:
+            llm_result = _llm_closure_assessment(chapter_num, current, brief, context)
+
+        if mode == "deterministic":
+            passes = bool(deterministic["passes"])
+        elif mode == "llm":
+            passes = bool((llm_result or {}).get("passes", False))
+        else:
+            llm_pass = bool((llm_result or {}).get("passes", True))
+            passes = bool(deterministic["passes"]) and llm_pass
+
+        merged_issues = list(deterministic.get("issues", []))
+        if llm_result:
+            merged_issues.extend(llm_result.get("issues", []))
+        merged_issues = [item for item in dict.fromkeys(str(x).strip() for x in merged_issues) if item]
+
+        report_payload = {
+            "mode": mode,
+            "attempt": attempt,
+            "passes": passes,
+            "deterministic": deterministic,
+            "llm": llm_result,
+            "issues": merged_issues,
+        }
+        report_path.write_text(json.dumps(report_payload, indent=2), encoding="utf-8")
+
+        if passes:
+            if attempt > 0:
+                _log(f"[INFO] Chapter {chapter_num} closure guard resolved after rewrite attempt {attempt}")
+            return current
+
+        if attempt >= max_rewrites:
+            _log(
+                f"[WARN] Chapter {chapter_num} closure guard did not pass after {max_rewrites} rewrite attempt(s); "
+                f"continuing with best available ending. See {report_path}"
+            )
+            return current
+
+        _log(f"[INFO] Chapter {chapter_num} closure guard rewrite attempt {attempt + 1} with {len(merged_issues)} issue(s)")
+        try:
+            current = _rewrite_chapter_ending(chapter_num, current, brief, context, merged_issues)
+            current = _remove_meta_phrases(current, list(SETTINGS.meta_phrases))
+            current = _ensure_complete_sentence_ending(current)
+        except Exception as exc:
+            _log(f"[WARN] Chapter {chapter_num} ending rewrite failed on attempt {attempt + 1}: {exc}")
+            return current
+
+    return current
 
 
 def _chapter_title_from_brief(chapter_num: int, brief: dict) -> str:
@@ -1649,6 +1931,8 @@ def run_chapter(chapter_num: int) -> None:
     final = _run_lint_repairs(chapter_num, final, brief, context)
     final = _recover_chapter_length_after_repairs(chapter_num, final, brief, context, word_min, word_max)
     final = _remove_meta_phrases(final, list(SETTINGS.meta_phrases))
+    final = _ensure_complete_sentence_ending(final)
+    final = _apply_chapter_closure_guard(chapter_num, final, brief, context)
     final = _ensure_complete_sentence_ending(final)
     _debug_len("Final chapter (post-enforcement)", final)
 

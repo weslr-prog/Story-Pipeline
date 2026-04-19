@@ -96,6 +96,14 @@ class Settings:
     max_lint_repairs: int = _env_int("MAX_LINT_REPAIRS", 2)
     max_duplicate_paragraph_repeats: int = _env_int("MAX_DUPLICATE_PARAGRAPH_REPEATS", 1)
     max_sentence_repeat: int = _env_int("MAX_SENTENCE_REPEAT", 2)
+    chapter_closure_guard_mode: str = os.getenv("CHAPTER_CLOSURE_GUARD_MODE", "hybrid")
+    chapter_closure_rewrite_attempts: int = _env_int("CHAPTER_CLOSURE_REWRITE_ATTEMPTS", 1)
+    chapter_closure_tail_paragraphs: int = _env_int("CHAPTER_CLOSURE_TAIL_PARAGRAPHS", 3)
+    chapter_closure_min_tail_words: int = _env_int("CHAPTER_CLOSURE_MIN_TAIL_WORDS", 55)
+    chapter_closure_min_keyword_overlap: float = _env_float("CHAPTER_CLOSURE_MIN_KEYWORD_OVERLAP", 0.18)
+    chapter_closure_require_brief_anchor: bool = _env_bool("CHAPTER_CLOSURE_REQUIRE_BRIEF_ANCHOR", True)
+    chapter_closure_llm_verify: bool = _env_bool("CHAPTER_CLOSURE_LLM_VERIFY", True)
+    chapter_closure_llm_max_tokens: int = _env_int("CHAPTER_CLOSURE_LLM_MAX_TOKENS", 650)
     meta_phrases: tuple[str, ...] = _env_csv(
         "META_PHRASES",
         "this is only the beginning,on a journey,story had only started,dear reader,reader,in this chapter,the author,the writer,prompt,model,ai,word count,word target,target word count,chapter brief,character beat,character beats,continuity flags,continuity_flags",
