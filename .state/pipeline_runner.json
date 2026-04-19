@@ -1,7 +1,7 @@
 {
-  "pid": 23019,
-  "log_path": "/Users/wes/Desktop/Story_Time/.state/pipeline_run_1776481148.log",
-  "started_at": 1776481148.4604359,
+  "pid": 44645,
+  "log_path": "/Users/wes/Desktop/Story_Time/.state/pipeline_run_1776556639.log",
+  "started_at": 1776556639.520622,
   "mode": "Chapter Range",
   "chapter_limit": 2,
   "start_chapter": 1,

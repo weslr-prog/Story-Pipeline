@@ -1,0 +1,384 @@
+[2026-04-18 19:57:19] [INFO] LLM backend: local_disk_kv
+[2026-04-18 19:57:19] [INFO] Local disk-KV endpoint: http://127.0.0.1:11434/v1/chat/completions
+[2026-04-18 19:57:19] [INFO] Local disk-KV model: qwen2.5:7b-instruct-q5_K_M
+[2026-04-18 19:57:19] [INFO] Chapter window: 1-2 (available=10)
+[2026-04-18 19:57:19] [INFO] Chapter 1 start
+[2026-04-18 19:57:19] [DEBUG] Chapter 1 style guide truncated (37552 -> 4120 chars)
+[2026-04-18 19:57:19] [DEBUG] Chapter 1 context: 3,106 words  ~= 4,141 tokens
+[2026-04-18 19:57:19] [INFO] Chapter 1 scene plan generation started
+[2026-04-18 19:57:19] [DEBUG] chapter 1 scene planner start (attempt 1/2, prompt_words=3911, prompt_tokens~=5214, timeout=300s)
+[2026-04-18 19:57:19] [LOCAL_LLM] request start model=qwen2.5:7b-instruct-q5_K_M attempt=1/3 endpoint=http://127.0.0.1:11434/v1/chat/completions prompt_words=3911 prompt_tokens~=5214 request_tokens=1800 num_ctx=20480 timeout=300s
+[2026-04-18 20:00:30] [LOCAL_LLM] request success model=qwen2.5:7b-instruct-q5_K_M attempt=1/3 status=200 elapsed=190.6s
+[2026-04-18 20:00:30] [INFO] chapter 1 scene planner completed in 190.6s
+[2026-04-18 20:00:30] [INFO] Chapter 1 scene plan generation finished
+[2026-04-18 20:00:30] [WARN] Scene plan parse failed for chapter 1; requesting strict-format rewrite (attempt 1).
+[2026-04-18 20:00:30] [DEBUG] chapter 1 scene plan rewrite attempt 1 start (attempt 1/2, prompt_words=4932, prompt_tokens~=6576, timeout=300s)
+[2026-04-18 20:00:30] [LOCAL_LLM] request start model=qwen2.5:7b-instruct-q5_K_M attempt=1/3 endpoint=http://127.0.0.1:11434/v1/chat/completions prompt_words=4932 prompt_tokens~=6576 request_tokens=1400 num_ctx=20480 timeout=300s
+[2026-04-18 20:04:27] [LOCAL_LLM] request success model=qwen2.5:7b-instruct-q5_K_M attempt=1/3 status=200 elapsed=237.2s
+[2026-04-18 20:04:27] [INFO] chapter 1 scene plan rewrite attempt 1 completed in 237.2s
+[2026-04-18 20:04:27] [WARN] Scene plan remained unparsable after retries for chapter 1; using brief-derived deterministic fallback scenes.
+[2026-04-18 20:04:27] [INFO] Generating scene 1 of chapter 1
+[2026-04-18 20:04:27] [DEBUG] chapter 1 scene 1 writer start (attempt 1/2, prompt_words=3635, prompt_tokens~=4846, timeout=300s)
+[2026-04-18 20:04:27] [LOCAL_LLM] request start model=qwen2.5:7b-instruct-q5_K_M attempt=1/3 endpoint=http://127.0.0.1:11434/v1/chat/completions prompt_words=3635 prompt_tokens~=4846 request_tokens=1800 num_ctx=20480 timeout=300s
+[2026-04-18 20:07:43] [LOCAL_LLM] request success model=qwen2.5:7b-instruct-q5_K_M attempt=1/3 status=200 elapsed=196.4s
+[2026-04-18 20:07:43] [INFO] chapter 1 scene 1 writer completed in 196.4s
+[2026-04-18 20:07:43] [DEBUG] Scene draft (raw): 779 words  ~= 1,038 tokens
+[2026-04-18 20:07:43] [DEBUG] chapter 1 scene 1 editor start (attempt 1/2, prompt_words=949, prompt_tokens~=1265, timeout=300s)
+[2026-04-18 20:07:43] [LOCAL_LLM] request start model=qwen2.5:7b-instruct-q5_K_M attempt=1/3 endpoint=http://127.0.0.1:11434/v1/chat/completions prompt_words=949 prompt_tokens~=1265 request_tokens=1500 num_ctx=20480 timeout=300s
+[2026-04-18 20:08:56] [LOCAL_LLM] request success model=qwen2.5:7b-instruct-q5_K_M attempt=1/3 status=200 elapsed=72.4s
+[2026-04-18 20:08:56] [INFO] chapter 1 scene 1 editor completed in 72.4s
+[2026-04-18 20:08:56] [DEBUG] Scene edited: 307 words  ~= 409 tokens
+[2026-04-18 20:08:56] [INFO] Chapter 1 word count after enforcement: 307
+[2026-04-18 20:08:56] [DEBUG] Scene after expansion: 307 words  ~= 409 tokens
+[2026-04-18 20:08:56] [INFO] Generating scene 2 of chapter 1
+[2026-04-18 20:08:56] [DEBUG] chapter 1 scene 2 writer start (attempt 1/2, prompt_words=3897, prompt_tokens~=5196, timeout=300s)
+[2026-04-18 20:08:56] [LOCAL_LLM] request start model=qwen2.5:7b-instruct-q5_K_M attempt=1/3 endpoint=http://127.0.0.1:11434/v1/chat/completions prompt_words=3897 prompt_tokens~=5196 request_tokens=1800 num_ctx=20480 timeout=300s
+[2026-04-18 20:13:56] [WARN] chapter 1 scene 2 writer failed on attempt 1/2 after 300.0s: chapter 1 scene 2 writer exceeded 300s
+[2026-04-18 20:13:56] [WARN] chapter 1 scene 2 writer reducing max tokens for retry: 1800 -> 1350
+[2026-04-18 20:13:59] [DEBUG] chapter 1 scene 2 writer start (attempt 2/2, prompt_words=3897, prompt_tokens~=5196, timeout=300s)
+[2026-04-18 20:13:59] [LOCAL_LLM] request start model=qwen2.5:7b-instruct-q5_K_M attempt=1/3 endpoint=http://127.0.0.1:11434/v1/chat/completions prompt_words=3897 prompt_tokens~=5196 request_tokens=1350 num_ctx=20480 timeout=300s
+[2026-04-18 20:18:13] [LOCAL_LLM] request success model=qwen2.5:7b-instruct-q5_K_M attempt=1/3 status=200 elapsed=254.2s
+[2026-04-18 20:18:13] [INFO] chapter 1 scene 2 writer completed in 254.2s
+[2026-04-18 20:18:13] [DEBUG] Scene draft (raw): 992 words  ~= 1,322 tokens
+[2026-04-18 20:18:13] [DEBUG] chapter 1 scene 2 editor start (attempt 1/2, prompt_words=1461, prompt_tokens~=1948, timeout=300s)
+[2026-04-18 20:18:13] [LOCAL_LLM] request start model=qwen2.5:7b-instruct-q5_K_M attempt=1/3 endpoint=http://127.0.0.1:11434/v1/chat/completions prompt_words=1461 prompt_tokens~=1948 request_tokens=1500 num_ctx=20480 timeout=300s
+[2026-04-18 20:19:35] [LOCAL_LLM] request success model=qwen2.5:7b-instruct-q5_K_M attempt=1/3 status=200 elapsed=82.1s
+[2026-04-18 20:19:35] [INFO] chapter 1 scene 2 editor completed in 82.1s
+[2026-04-18 20:19:35] [DEBUG] Scene edited: 291 words  ~= 388 tokens
+[2026-04-18 20:19:35] [INFO] Chapter 1 word count after enforcement: 291
+[2026-04-18 20:19:35] [DEBUG] Scene after expansion: 291 words  ~= 388 tokens
+[2026-04-18 20:19:35] [INFO] Generating scene 3 of chapter 1
+[2026-04-18 20:19:35] [DEBUG] chapter 1 scene 3 writer start (attempt 1/2, prompt_words=4230, prompt_tokens~=5640, timeout=300s)
+[2026-04-18 20:19:35] [LOCAL_LLM] request start model=qwen2.5:7b-instruct-q5_K_M attempt=1/3 endpoint=http://127.0.0.1:11434/v1/chat/completions prompt_words=4230 prompt_tokens~=5640 request_tokens=1800 num_ctx=20480 timeout=300s
+[2026-04-18 20:24:35] [WARN] chapter 1 scene 3 writer failed on attempt 1/2 after 300.1s: chapter 1 scene 3 writer exceeded 300s
+[2026-04-18 20:24:35] [WARN] chapter 1 scene 3 writer reducing max tokens for retry: 1800 -> 1350
+[2026-04-18 20:24:38] [DEBUG] chapter 1 scene 3 writer start (attempt 2/2, prompt_words=4230, prompt_tokens~=5640, timeout=300s)
+[2026-04-18 20:24:38] [LOCAL_LLM] request start model=qwen2.5:7b-instruct-q5_K_M attempt=1/3 endpoint=http://127.0.0.1:11434/v1/chat/completions prompt_words=4230 prompt_tokens~=5640 request_tokens=1350 num_ctx=20480 timeout=300s
+[2026-04-18 20:29:05] [LOCAL_LLM] request success model=qwen2.5:7b-instruct-q5_K_M attempt=1/3 status=200 elapsed=267.0s
+[2026-04-18 20:29:05] [INFO] chapter 1 scene 3 writer completed in 267.0s
+[2026-04-18 20:29:05] [DEBUG] Scene draft (raw): 889 words  ~= 1,185 tokens
+[2026-04-18 20:29:05] [DEBUG] chapter 1 scene 3 editor start (attempt 1/2, prompt_words=1649, prompt_tokens~=2198, timeout=300s)
+[2026-04-18 20:29:05] [LOCAL_LLM] request start model=qwen2.5:7b-instruct-q5_K_M attempt=1/3 endpoint=http://127.0.0.1:11434/v1/chat/completions prompt_words=1649 prompt_tokens~=2198 request_tokens=1500 num_ctx=20480 timeout=300s
+[2026-04-18 20:30:42] [LOCAL_LLM] request success model=qwen2.5:7b-instruct-q5_K_M attempt=1/3 status=200 elapsed=96.7s
+[2026-04-18 20:30:42] [INFO] chapter 1 scene 3 editor completed in 96.7s
+[2026-04-18 20:30:42] [DEBUG] Scene edited: 266 words  ~= 354 tokens
+[2026-04-18 20:30:42] [INFO] Chapter 1 word count after enforcement: 266
+[2026-04-18 20:30:42] [DEBUG] Scene after expansion: 266 words  ~= 354 tokens
+[2026-04-18 20:30:42] [DEBUG] Full chapter (stitched): 864 words  ~= 1,152 tokens
+[2026-04-18 20:30:42] [INFO] Chapter 1 word count after enforcement: 864
+[2026-04-18 20:30:42] [WARN] Chapter 1 dropped below target after repairs (537 < 1200); re-expanding.
+[2026-04-18 20:30:42] [DEBUG] chapter 1 expansion start (attempt 1/1, prompt_words=3710, prompt_tokens~=4946, timeout=300s)
+[2026-04-18 20:30:42] [LOCAL_LLM] request start model=qwen2.5:7b-instruct-q5_K_M attempt=1/3 endpoint=http://127.0.0.1:11434/v1/chat/completions prompt_words=3710 prompt_tokens~=4946 request_tokens=1400 num_ctx=20480 timeout=300s
+[2026-04-18 20:35:42] [LOCAL_LLM] request error model=qwen2.5:7b-instruct-q5_K_M attempt=1/3 elapsed=300.0s error=HTTPConnectionPool(host='127.0.0.1', port=11434): Read timed out. (read timeout=300)
+[2026-04-18 20:35:42] [WARN] chapter 1 expansion failed on attempt 1/1 after 300.0s: chapter 1 expansion exceeded 300s
+[2026-04-18 20:35:42] [WARN] chapter 1 expansion reducing max tokens for retry: 1400 -> 1050
+[2026-04-18 20:35:42] [WARN] Chapter 1 expansion call failed: chapter 1 expansion failed after 1 attempts: chapter 1 expansion exceeded 300s
+[2026-04-18 20:35:42] [INFO] Chapter 1 word count after enforcement: 537
+[2026-04-18 20:35:42] [DEBUG] Final chapter (post-enforcement): 537 words  ~= 716 tokens
+[2026-04-18 20:35:42] [DEBUG] chapter 1 archivist summary start (attempt 1/2, prompt_words=558, prompt_tokens~=744, timeout=300s)
+[2026-04-18 20:35:42] [LOCAL_LLM] request start model=qwen2.5:7b-instruct-q5_K_M attempt=1/3 endpoint=http://127.0.0.1:11434/v1/chat/completions prompt_words=558 prompt_tokens~=744 request_tokens=450 num_ctx=20480 timeout=300s
+[2026-04-18 20:36:22] [LOCAL_LLM] request success model=qwen2.5:7b-instruct-q5_K_M attempt=1/3 status=200 elapsed=40.1s
+[2026-04-18 20:36:22] [INFO] chapter 1 archivist summary completed in 40.1s
+[2026-04-18 20:36:23] [INFO] Word targeting mode: static (1200-1800)
+[2026-04-18 20:36:23] [INFO] Final chapter word count: 537
+Loaded as API: http://127.0.0.1:7865/
+Client.predict() Usage Info
+---------------------------
+Named API endpoints: 2
+
+ - predict(api_name="/load_model") -> 
+    Parameters:
+     - None
+    Returns:
+     - None
+
+ - predict(text, audio_prompt_path, exaggeration, temperature, seed_num, cfgw, min_p, top_p, repetition_penalty, api_name="/generate") -> output_audio
+    Parameters:
+     - [Textbox] text: str (not required, defaults to:   Now let's make my mum's favourite. So three mars bars into the pan. Then we add the tuna and just stir for a bit, just let the chocolate and fish infuse. A sprinkle of olive oil and some tomato ketchup. Now smell that. Oh boy this is going to be incredible.)  
+     - [Audio] audio_prompt_path: filepath (required)  (The FileData class is a subclass of the GradioModel class that represents a file object within a Gradio interface. It is used to store file data and metadata when a file is uploaded.
+
+Attributes:
+    path: The server file path where the file is stored.
+    url: The normalized server URL pointing to the file.
+    size: The size of the file in bytes.
+    orig_name: The original filename before upload.
+    mime_type: The MIME type of the file.
+    is_stream: Indicates whether the file is a stream.
+    meta: Additional metadata used internally (should not be changed).) 
+     - [Slider] exaggeration: float (not required, defaults to:   0.5)  
+     - [Slider] temperature: float (not required, defaults to:   0.8)  
+     - [Number] seed_num: float (not required, defaults to:   0)  
+     - [Slider] cfgw: float (not required, defaults to:   0.5)  
+     - [Slider] min_p: float (not required, defaults to:   0.05)  
+     - [Slider] top_p: float (not required, defaults to:   1.0)  
+     - [Slider] repetition_penalty: float (not required, defaults to:   1.2)  
+    Returns:
+     - [Audio] output_audio: filepath 
+
+[INFO] TTS chapter 1 start: sentences=40 voice=voices/Man Enuciate.wav api=/generate resume=True
+[WARN] Missing source hash in chapter 1 manifest; forcing regeneration.
+[INFO] Narration source changed for chapter 1; invalidating cached segments.
+[DEBUG] TTS chapter 1 sentence 1/40 attempt 1/3
+[DEBUG] TTS chapter 1 sentence 2/40 attempt 1/3
+[DEBUG] TTS chapter 1 sentence 3/40 attempt 1/3
+[DEBUG] TTS chapter 1 sentence 4/40 attempt 1/3
+[DEBUG] TTS chapter 1 sentence 5/40 attempt 1/3
+[DEBUG] TTS chapter 1 sentence 6/40 attempt 1/3
+[DEBUG] TTS chapter 1 sentence 7/40 attempt 1/3
+[DEBUG] TTS chapter 1 sentence 8/40 attempt 1/3
+[DEBUG] TTS chapter 1 sentence 9/40 attempt 1/3
+[DEBUG] TTS chapter 1 sentence 10/40 attempt 1/3
+[DEBUG] TTS chapter 1 sentence 11/40 attempt 1/3
+[DEBUG] TTS chapter 1 sentence 12/40 attempt 1/3
+[DEBUG] TTS chapter 1 sentence 13/40 attempt 1/3
+[DEBUG] TTS chapter 1 sentence 14/40 attempt 1/3
+[DEBUG] TTS chapter 1 sentence 15/40 attempt 1/3
+[DEBUG] TTS chapter 1 sentence 16/40 attempt 1/3
+[DEBUG] TTS chapter 1 sentence 17/40 attempt 1/3
+[DEBUG] TTS chapter 1 sentence 18/40 attempt 1/3
+[DEBUG] TTS chapter 1 sentence 19/40 attempt 1/3
+[DEBUG] TTS chapter 1 sentence 20/40 attempt 1/3
+[DEBUG] TTS chapter 1 sentence 21/40 attempt 1/3
+[DEBUG] TTS chapter 1 sentence 22/40 attempt 1/3
+[DEBUG] TTS chapter 1 sentence 23/40 attempt 1/3
+[DEBUG] TTS chapter 1 sentence 23/40 attempt 2/3
+[DEBUG] TTS chapter 1 sentence 23/40 attempt 3/3
+[WARN] TTS chapter 1 sentence 23 failed after retries: chapter 1 sentence 22 exceeded 90s
+[DEBUG] TTS chapter 1 sentence 24/40 attempt 1/3
+[DEBUG] TTS chapter 1 sentence 25/40 attempt 1/3
+[DEBUG] TTS chapter 1 sentence 26/40 attempt 1/3
+[DEBUG] TTS chapter 1 sentence 27/40 attempt 1/3
+[DEBUG] TTS chapter 1 sentence 28/40 attempt 1/3
+[DEBUG] TTS chapter 1 sentence 29/40 attempt 1/3
+[DEBUG] TTS chapter 1 sentence 30/40 attempt 1/3
+[DEBUG] TTS chapter 1 sentence 31/40 attempt 1/3
+[DEBUG] TTS chapter 1 sentence 32/40 attempt 1/3
+[DEBUG] TTS chapter 1 sentence 33/40 attempt 1/3
+[DEBUG] TTS chapter 1 sentence 34/40 attempt 1/3
+[DEBUG] TTS chapter 1 sentence 35/40 attempt 1/3
+[DEBUG] TTS chapter 1 sentence 36/40 attempt 1/3
+[DEBUG] TTS chapter 1 sentence 37/40 attempt 1/3
+[DEBUG] TTS chapter 1 sentence 38/40 attempt 1/3
+[DEBUG] TTS chapter 1 sentence 39/40 attempt 1/3
+[DEBUG] TTS chapter 1 sentence 40/40 attempt 1/3
+[INFO] TTS chapter 1 done: segments=39 output=/Users/wes/Desktop/Story_Time/audio/ch01_narration.wav elapsed=2268.1s
+[2026-04-18 21:14:11] [INFO] Chapter 1 narration finished: /Users/wes/Desktop/Story_Time/audio/ch01_narration.wav
+[2026-04-18 21:14:16] [INFO] Chapter 1 complete alert played (double_beep)
+[2026-04-18 21:14:16] [OK] Chapter 1 complete in 4616.6s
+[2026-04-18 21:14:16] [INFO] Chapter 2 start
+[2026-04-18 21:14:16] [DEBUG] Chapter 2 style guide truncated (37552 -> 4120 chars)
+[2026-04-18 21:14:16] [DEBUG] Chapter 2 context: 3,252 words  ~= 4,336 tokens
+[2026-04-18 21:14:16] [INFO] Chapter 2 scene plan generation started
+[2026-04-18 21:14:16] [DEBUG] chapter 2 scene planner start (attempt 1/2, prompt_words=4078, prompt_tokens~=5437, timeout=300s)
+[2026-04-18 21:14:16] [LOCAL_LLM] request start model=qwen2.5:7b-instruct-q5_K_M attempt=1/3 endpoint=http://127.0.0.1:11434/v1/chat/completions prompt_words=4078 prompt_tokens~=5437 request_tokens=1800 num_ctx=20480 timeout=300s
+[2026-04-18 21:19:16] [WARN] chapter 2 scene planner failed on attempt 1/2 after 300.0s: chapter 2 scene planner exceeded 300s
+[2026-04-18 21:19:16] [WARN] chapter 2 scene planner reducing max tokens for retry: 1800 -> 1350
+[2026-04-18 21:19:19] [DEBUG] chapter 2 scene planner start (attempt 2/2, prompt_words=4078, prompt_tokens~=5437, timeout=300s)
+[2026-04-18 21:19:19] [LOCAL_LLM] request start model=qwen2.5:7b-instruct-q5_K_M attempt=1/3 endpoint=http://127.0.0.1:11434/v1/chat/completions prompt_words=4078 prompt_tokens~=5437 request_tokens=1350 num_ctx=20480 timeout=300s
+[2026-04-18 21:23:30] [LOCAL_LLM] request success model=qwen2.5:7b-instruct-q5_K_M attempt=1/3 status=200 elapsed=251.5s
+[2026-04-18 21:23:30] [INFO] chapter 2 scene planner completed in 251.5s
+[2026-04-18 21:23:30] [INFO] Chapter 2 scene plan generation finished
+[2026-04-18 21:23:30] [WARN] Scene plan parse failed for chapter 2; requesting strict-format rewrite (attempt 1).
+[2026-04-18 21:23:30] [DEBUG] chapter 2 scene plan rewrite attempt 1 start (attempt 1/2, prompt_words=5215, prompt_tokens~=6953, timeout=300s)
+[2026-04-18 21:23:30] [LOCAL_LLM] request start model=qwen2.5:7b-instruct-q5_K_M attempt=1/3 endpoint=http://127.0.0.1:11434/v1/chat/completions prompt_words=5215 prompt_tokens~=6953 request_tokens=1400 num_ctx=20480 timeout=300s
+[2026-04-18 21:27:52] [LOCAL_LLM] request success model=qwen2.5:7b-instruct-q5_K_M attempt=1/3 status=200 elapsed=261.9s
+[2026-04-18 21:27:52] [INFO] chapter 2 scene plan rewrite attempt 1 completed in 261.9s
+[2026-04-18 21:27:52] [WARN] Scene plan remained unparsable after retries for chapter 2; using brief-derived deterministic fallback scenes.
+[2026-04-18 21:27:52] [INFO] Generating scene 1 of chapter 2
+[2026-04-18 21:27:52] [DEBUG] chapter 2 scene 1 writer start (attempt 1/2, prompt_words=3837, prompt_tokens~=5116, timeout=300s)
+[2026-04-18 21:27:52] [LOCAL_LLM] request start model=qwen2.5:7b-instruct-q5_K_M attempt=1/3 endpoint=http://127.0.0.1:11434/v1/chat/completions prompt_words=3837 prompt_tokens~=5116 request_tokens=1800 num_ctx=20480 timeout=300s
+[2026-04-18 21:32:52] [LOCAL_LLM] request error model=qwen2.5:7b-instruct-q5_K_M attempt=1/3 elapsed=300.0s error=HTTPConnectionPool(host='127.0.0.1', port=11434): Read timed out. (read timeout=300)
+[2026-04-18 21:32:52] [WARN] chapter 2 scene 1 writer failed on attempt 1/2 after 300.0s: chapter 2 scene 1 writer exceeded 300s
+[2026-04-18 21:32:52] [WARN] chapter 2 scene 1 writer reducing max tokens for retry: 1800 -> 1350
+[2026-04-18 21:32:55] [DEBUG] chapter 2 scene 1 writer start (attempt 2/2, prompt_words=3837, prompt_tokens~=5116, timeout=300s)
+[2026-04-18 21:32:55] [LOCAL_LLM] request start model=qwen2.5:7b-instruct-q5_K_M attempt=1/3 endpoint=http://127.0.0.1:11434/v1/chat/completions prompt_words=3837 prompt_tokens~=5116 request_tokens=1350 num_ctx=20480 timeout=300s
+[2026-04-18 21:37:10] [LOCAL_LLM] request success model=qwen2.5:7b-instruct-q5_K_M attempt=1/3 status=200 elapsed=254.3s
+[2026-04-18 21:37:10] [INFO] chapter 2 scene 1 writer completed in 254.3s
+[2026-04-18 21:37:10] [DEBUG] Scene draft (raw): 976 words  ~= 1,301 tokens
+[2026-04-18 21:37:10] [DEBUG] chapter 2 scene 1 editor start (attempt 1/2, prompt_words=1146, prompt_tokens~=1528, timeout=300s)
+[2026-04-18 21:37:10] [LOCAL_LLM] request start model=qwen2.5:7b-instruct-q5_K_M attempt=1/3 endpoint=http://127.0.0.1:11434/v1/chat/completions prompt_words=1146 prompt_tokens~=1528 request_tokens=1500 num_ctx=20480 timeout=300s
+[2026-04-18 21:38:30] [LOCAL_LLM] request success model=qwen2.5:7b-instruct-q5_K_M attempt=1/3 status=200 elapsed=80.2s
+[2026-04-18 21:38:30] [INFO] chapter 2 scene 1 editor completed in 80.2s
+[2026-04-18 21:38:30] [DEBUG] Scene edited: 325 words  ~= 433 tokens
+[2026-04-18 21:38:30] [INFO] Chapter 2 word count after enforcement: 325
+[2026-04-18 21:38:30] [DEBUG] Scene after expansion: 325 words  ~= 433 tokens
+[2026-04-18 21:38:30] [INFO] Generating scene 2 of chapter 2
+[2026-04-18 21:38:30] [DEBUG] chapter 2 scene 2 writer start (attempt 1/2, prompt_words=4089, prompt_tokens~=5452, timeout=300s)
+[2026-04-18 21:38:30] [LOCAL_LLM] request start model=qwen2.5:7b-instruct-q5_K_M attempt=1/3 endpoint=http://127.0.0.1:11434/v1/chat/completions prompt_words=4089 prompt_tokens~=5452 request_tokens=1800 num_ctx=20480 timeout=300s
+[2026-04-18 21:43:30] [WARN] chapter 2 scene 2 writer failed on attempt 1/2 after 300.0s: chapter 2 scene 2 writer exceeded 300s
+[2026-04-18 21:43:30] [WARN] chapter 2 scene 2 writer reducing max tokens for retry: 1800 -> 1350
+[2026-04-18 21:43:33] [DEBUG] chapter 2 scene 2 writer start (attempt 2/2, prompt_words=4089, prompt_tokens~=5452, timeout=300s)
+[2026-04-18 21:43:33] [LOCAL_LLM] request start model=qwen2.5:7b-instruct-q5_K_M attempt=1/3 endpoint=http://127.0.0.1:11434/v1/chat/completions prompt_words=4089 prompt_tokens~=5452 request_tokens=1350 num_ctx=20480 timeout=300s
+[2026-04-18 21:47:33] [LOCAL_LLM] request success model=qwen2.5:7b-instruct-q5_K_M attempt=1/3 status=200 elapsed=240.4s
+[2026-04-18 21:47:33] [INFO] chapter 2 scene 2 writer completed in 240.4s
+[2026-04-18 21:47:33] [DEBUG] Scene draft (raw): 916 words  ~= 1,221 tokens
+[2026-04-18 21:47:33] [DEBUG] chapter 2 scene 2 editor start (attempt 1/2, prompt_words=1403, prompt_tokens~=1870, timeout=300s)
+[2026-04-18 21:47:33] [LOCAL_LLM] request start model=qwen2.5:7b-instruct-q5_K_M attempt=1/3 endpoint=http://127.0.0.1:11434/v1/chat/completions prompt_words=1403 prompt_tokens~=1870 request_tokens=1500 num_ctx=20480 timeout=300s
+[2026-04-18 21:48:42] [LOCAL_LLM] request success model=qwen2.5:7b-instruct-q5_K_M attempt=1/3 status=200 elapsed=68.8s
+[2026-04-18 21:48:42] [INFO] chapter 2 scene 2 editor completed in 68.8s
+[2026-04-18 21:48:42] [DEBUG] Scene edited: 240 words  ~= 320 tokens
+[2026-04-18 21:48:42] [INFO] Chapter 2 word count after enforcement: 240
+[2026-04-18 21:48:42] [DEBUG] Scene after expansion: 240 words  ~= 320 tokens
+[2026-04-18 21:48:42] [INFO] Generating scene 3 of chapter 2
+[2026-04-18 21:48:42] [DEBUG] chapter 2 scene 3 writer start (attempt 1/2, prompt_words=4352, prompt_tokens~=5802, timeout=300s)
+[2026-04-18 21:48:42] [LOCAL_LLM] request start model=qwen2.5:7b-instruct-q5_K_M attempt=1/3 endpoint=http://127.0.0.1:11434/v1/chat/completions prompt_words=4352 prompt_tokens~=5802 request_tokens=1800 num_ctx=20480 timeout=300s
+[2026-04-18 21:53:42] [WARN] chapter 2 scene 3 writer failed on attempt 1/2 after 300.0s: chapter 2 scene 3 writer exceeded 300s
+[2026-04-18 21:53:42] [WARN] chapter 2 scene 3 writer reducing max tokens for retry: 1800 -> 1350
+[2026-04-18 21:53:45] [DEBUG] chapter 2 scene 3 writer start (attempt 2/2, prompt_words=4352, prompt_tokens~=5802, timeout=300s)
+[2026-04-18 21:53:45] [LOCAL_LLM] request start model=qwen2.5:7b-instruct-q5_K_M attempt=1/3 endpoint=http://127.0.0.1:11434/v1/chat/completions prompt_words=4352 prompt_tokens~=5802 request_tokens=1350 num_ctx=20480 timeout=300s
+[2026-04-18 21:58:00] [LOCAL_LLM] request success model=qwen2.5:7b-instruct-q5_K_M attempt=1/3 status=200 elapsed=254.7s
+[2026-04-18 21:58:00] [INFO] chapter 2 scene 3 writer completed in 254.7s
+[2026-04-18 21:58:00] [DEBUG] Scene draft (raw): 998 words  ~= 1,330 tokens
+[2026-04-18 21:58:00] [DEBUG] chapter 2 scene 3 editor start (attempt 1/2, prompt_words=1725, prompt_tokens~=2300, timeout=300s)
+[2026-04-18 21:58:00] [LOCAL_LLM] request start model=qwen2.5:7b-instruct-q5_K_M attempt=1/3 endpoint=http://127.0.0.1:11434/v1/chat/completions prompt_words=1725 prompt_tokens~=2300 request_tokens=1500 num_ctx=20480 timeout=300s
+[2026-04-18 21:59:33] [LOCAL_LLM] request success model=qwen2.5:7b-instruct-q5_K_M attempt=1/3 status=200 elapsed=93.0s
+[2026-04-18 21:59:33] [INFO] chapter 2 scene 3 editor completed in 93.0s
+[2026-04-18 21:59:33] [DEBUG] Scene edited: 320 words  ~= 426 tokens
+[2026-04-18 21:59:33] [INFO] Chapter 2 word count after enforcement: 320
+[2026-04-18 21:59:33] [DEBUG] Scene after expansion: 320 words  ~= 426 tokens
+[2026-04-18 21:59:33] [DEBUG] Full chapter (stitched): 885 words  ~= 1,180 tokens
+[2026-04-18 21:59:33] [INFO] Chapter 2 word count after enforcement: 885
+[2026-04-18 21:59:33] [WARN] Chapter 2 dropped below target after repairs (724 < 1200); re-expanding.
+[2026-04-18 21:59:33] [DEBUG] chapter 2 expansion start (attempt 1/1, prompt_words=4043, prompt_tokens~=5390, timeout=300s)
+[2026-04-18 21:59:33] [LOCAL_LLM] request start model=qwen2.5:7b-instruct-q5_K_M attempt=1/3 endpoint=http://127.0.0.1:11434/v1/chat/completions prompt_words=4043 prompt_tokens~=5390 request_tokens=1400 num_ctx=20480 timeout=300s
+[2026-04-18 22:03:58] [LOCAL_LLM] request success model=qwen2.5:7b-instruct-q5_K_M attempt=1/3 status=200 elapsed=264.8s
+[2026-04-18 22:03:58] [INFO] chapter 2 expansion completed in 264.8s
+[2026-04-18 22:03:58] [INFO] Chapter 2 word count after enforcement: 1062
+[2026-04-18 22:03:58] [DEBUG] Final chapter (post-enforcement): 991 words  ~= 1,321 tokens
+[2026-04-18 22:03:58] [DEBUG] chapter 2 archivist summary start (attempt 1/2, prompt_words=1012, prompt_tokens~=1349, timeout=300s)
+[2026-04-18 22:03:58] [LOCAL_LLM] request start model=qwen2.5:7b-instruct-q5_K_M attempt=1/3 endpoint=http://127.0.0.1:11434/v1/chat/completions prompt_words=1012 prompt_tokens~=1349 request_tokens=450 num_ctx=20480 timeout=300s
+[2026-04-18 22:05:19] [LOCAL_LLM] request success model=qwen2.5:7b-instruct-q5_K_M attempt=1/3 status=200 elapsed=80.9s
+[2026-04-18 22:05:19] [INFO] chapter 2 archivist summary completed in 80.9s
+[2026-04-18 22:05:19] [INFO] Word targeting mode: static (1200-1800)
+[2026-04-18 22:05:19] [INFO] Final chapter word count: 991
+Loaded as API: http://127.0.0.1:7865/
+Client.predict() Usage Info
+---------------------------
+Named API endpoints: 2
+
+ - predict(api_name="/load_model") -> 
+    Parameters:
+     - None
+    Returns:
+     - None
+
+ - predict(text, audio_prompt_path, exaggeration, temperature, seed_num, cfgw, min_p, top_p, repetition_penalty, api_name="/generate") -> output_audio
+    Parameters:
+     - [Textbox] text: str (not required, defaults to:   Now let's make my mum's favourite. So three mars bars into the pan. Then we add the tuna and just stir for a bit, just let the chocolate and fish infuse. A sprinkle of olive oil and some tomato ketchup. Now smell that. Oh boy this is going to be incredible.)  
+     - [Audio] audio_prompt_path: filepath (required)  (The FileData class is a subclass of the GradioModel class that represents a file object within a Gradio interface. It is used to store file data and metadata when a file is uploaded.
+
+Attributes:
+    path: The server file path where the file is stored.
+    url: The normalized server URL pointing to the file.
+    size: The size of the file in bytes.
+    orig_name: The original filename before upload.
+    mime_type: The MIME type of the file.
+    is_stream: Indicates whether the file is a stream.
+    meta: Additional metadata used internally (should not be changed).) 
+     - [Slider] exaggeration: float (not required, defaults to:   0.5)  
+     - [Slider] temperature: float (not required, defaults to:   0.8)  
+     - [Number] seed_num: float (not required, defaults to:   0)  
+     - [Slider] cfgw: float (not required, defaults to:   0.5)  
+     - [Slider] min_p: float (not required, defaults to:   0.05)  
+     - [Slider] top_p: float (not required, defaults to:   1.0)  
+     - [Slider] repetition_penalty: float (not required, defaults to:   1.2)  
+    Returns:
+     - [Audio] output_audio: filepath 
+
+[INFO] TTS chapter 2 start: sentences=61 voice=voices/Man Enuciate.wav api=/generate resume=True
+[WARN] Missing source hash in chapter 2 manifest; forcing regeneration.
+[INFO] Narration source changed for chapter 2; invalidating cached segments.
+[DEBUG] TTS chapter 2 sentence 1/61 attempt 1/3
+[DEBUG] TTS chapter 2 sentence 2/61 attempt 1/3
+[DEBUG] TTS chapter 2 sentence 3/61 attempt 1/3
+[DEBUG] TTS chapter 2 sentence 4/61 attempt 1/3
+[DEBUG] TTS chapter 2 sentence 5/61 attempt 1/3
+[DEBUG] TTS chapter 2 sentence 6/61 attempt 1/3
+[DEBUG] TTS chapter 2 sentence 7/61 attempt 1/3
+[DEBUG] TTS chapter 2 sentence 8/61 attempt 1/3
+[DEBUG] TTS chapter 2 sentence 9/61 attempt 1/3
+[DEBUG] TTS chapter 2 sentence 10/61 attempt 1/3
+[DEBUG] TTS chapter 2 sentence 11/61 attempt 1/3
+[DEBUG] TTS chapter 2 sentence 12/61 attempt 1/3
+[DEBUG] TTS chapter 2 sentence 13/61 attempt 1/3
+[DEBUG] TTS chapter 2 sentence 14/61 attempt 1/3
+[DEBUG] TTS chapter 2 sentence 15/61 attempt 1/3
+[DEBUG] TTS chapter 2 sentence 16/61 attempt 1/3
+[DEBUG] TTS chapter 2 sentence 17/61 attempt 1/3
+[DEBUG] TTS chapter 2 sentence 18/61 attempt 1/3
+[DEBUG] TTS chapter 2 sentence 19/61 attempt 1/3
+[DEBUG] TTS chapter 2 sentence 20/61 attempt 1/3
+[DEBUG] TTS chapter 2 sentence 21/61 attempt 1/3
+[DEBUG] TTS chapter 2 sentence 22/61 attempt 1/3
+[DEBUG] TTS chapter 2 sentence 23/61 attempt 1/3
+[DEBUG] TTS chapter 2 sentence 23/61 attempt 2/3
+[DEBUG] TTS chapter 2 sentence 23/61 attempt 3/3
+[WARN] TTS chapter 2 sentence 23 failed after retries: chapter 2 sentence 22 exceeded 90s
+[DEBUG] TTS chapter 2 sentence 24/61 attempt 1/3
+[DEBUG] TTS chapter 2 sentence 24/61 attempt 2/3
+[DEBUG] TTS chapter 2 sentence 24/61 attempt 3/3
+[DEBUG] TTS chapter 2 sentence 25/61 attempt 1/3
+[DEBUG] TTS chapter 2 sentence 26/61 attempt 1/3
+[DEBUG] TTS chapter 2 sentence 27/61 attempt 1/3
+[DEBUG] TTS chapter 2 sentence 28/61 attempt 1/3
+[DEBUG] TTS chapter 2 sentence 29/61 attempt 1/3
+[DEBUG] TTS chapter 2 sentence 30/61 attempt 1/3
+[DEBUG] TTS chapter 2 sentence 31/61 attempt 1/3
+[DEBUG] TTS chapter 2 sentence 32/61 attempt 1/3
+[DEBUG] TTS chapter 2 sentence 33/61 attempt 1/3
+[DEBUG] TTS chapter 2 sentence 34/61 attempt 1/3
+[DEBUG] TTS chapter 2 sentence 35/61 attempt 1/3
+[DEBUG] TTS chapter 2 sentence 36/61 attempt 1/3
+[DEBUG] TTS chapter 2 sentence 37/61 attempt 1/3
+[DEBUG] TTS chapter 2 sentence 38/61 attempt 1/3
+[DEBUG] TTS chapter 2 sentence 39/61 attempt 1/3
+[DEBUG] TTS chapter 2 sentence 40/61 attempt 1/3
+[DEBUG] TTS chapter 2 sentence 40/61 attempt 2/3
+[DEBUG] TTS chapter 2 sentence 40/61 attempt 3/3
+[WARN] TTS chapter 2 sentence 40 failed after retries: chapter 2 sentence 39 exceeded 90s
+[DEBUG] TTS chapter 2 sentence 41/61 attempt 1/3
+[DEBUG] TTS chapter 2 sentence 41/61 attempt 2/3
+[DEBUG] TTS chapter 2 sentence 42/61 attempt 1/3
+[DEBUG] TTS chapter 2 sentence 43/61 attempt 1/3
+[DEBUG] TTS chapter 2 sentence 44/61 attempt 1/3
+[DEBUG] TTS chapter 2 sentence 45/61 attempt 1/3
+[DEBUG] TTS chapter 2 sentence 46/61 attempt 1/3
+[DEBUG] TTS chapter 2 sentence 47/61 attempt 1/3
+[DEBUG] TTS chapter 2 sentence 47/61 attempt 2/3
+[DEBUG] TTS chapter 2 sentence 47/61 attempt 3/3
+[DEBUG] TTS chapter 2 sentence 48/61 attempt 1/3
+[DEBUG] TTS chapter 2 sentence 49/61 attempt 1/3
+[DEBUG] TTS chapter 2 sentence 50/61 attempt 1/3
+[DEBUG] TTS chapter 2 sentence 51/61 attempt 1/3
+[DEBUG] TTS chapter 2 sentence 52/61 attempt 1/3
+[DEBUG] TTS chapter 2 sentence 53/61 attempt 1/3
+[DEBUG] TTS chapter 2 sentence 54/61 attempt 1/3
+[DEBUG] TTS chapter 2 sentence 54/61 attempt 2/3
+[DEBUG] TTS chapter 2 sentence 54/61 attempt 3/3
+[WARN] TTS chapter 2 sentence 54 failed after retries: chapter 2 sentence 53 exceeded 90s
+[DEBUG] TTS chapter 2 sentence 55/61 attempt 1/3
+[DEBUG] TTS chapter 2 sentence 55/61 attempt 2/3
+[DEBUG] TTS chapter 2 sentence 55/61 attempt 3/3
+[WARN] TTS chapter 2 sentence 55 failed after retries: chapter 2 sentence 54 exceeded 90s
+[DEBUG] TTS chapter 2 sentence 56/61 attempt 1/3
+[DEBUG] TTS chapter 2 sentence 57/61 attempt 1/3
+[DEBUG] TTS chapter 2 sentence 58/61 attempt 1/3
+[DEBUG] TTS chapter 2 sentence 58/61 attempt 2/3
+[DEBUG] TTS chapter 2 sentence 58/61 attempt 3/3
+[WARN] TTS chapter 2 sentence 58 failed after retries: chapter 2 sentence 57 exceeded 90s
+[DEBUG] TTS chapter 2 sentence 59/61 attempt 1/3
+[DEBUG] TTS chapter 2 sentence 59/61 attempt 2/3
+[DEBUG] TTS chapter 2 sentence 59/61 attempt 3/3
+[WARN] TTS chapter 2 sentence 59 failed after retries: chapter 2 sentence 58 exceeded 90s
+[DEBUG] TTS chapter 2 sentence 60/61 attempt 1/3
+[DEBUG] TTS chapter 2 sentence 60/61 attempt 2/3
+[DEBUG] TTS chapter 2 sentence 60/61 attempt 3/3
+[WARN] TTS chapter 2 sentence 60 failed after retries: chapter 2 sentence 59 exceeded 90s
+[DEBUG] TTS chapter 2 sentence 61/61 attempt 1/3
+[DEBUG] TTS chapter 2 sentence 61/61 attempt 2/3
+[DEBUG] TTS chapter 2 sentence 61/61 attempt 3/3
+[WARN] TTS chapter 2 sentence 61 failed after retries: chapter 2 sentence 60 exceeded 90s
+[INFO] TTS chapter 2 done: segments=53 output=/Users/wes/Desktop/Story_Time/audio/ch02_narration.wav elapsed=5171.0s
+[2026-04-18 23:31:30] [INFO] Chapter 2 narration finished: /Users/wes/Desktop/Story_Time/audio/ch02_narration.wav
+[2026-04-18 23:31:35] [INFO] Chapter 2 complete alert played (double_beep)
+[2026-04-18 23:31:35] [OK] Chapter 2 complete in 8239.3s

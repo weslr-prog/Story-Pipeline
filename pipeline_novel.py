@@ -316,6 +316,79 @@ _CHAPTER_WORDS = {
     20: "Twenty",
 }
 
+_CHAPTER_INTRO_RE = re.compile(r"^\s*chapter\s+[a-z0-9-]+\s*:\s*.+?[.!?]\s*$", flags=re.IGNORECASE)
+
+
+def _sanitize_runtime_prompt_text(text: str) -> str:
+    if not text:
+        return ""
+
+    out = text
+    filtered_lines: list[str] = []
+    for raw_line in out.splitlines():
+        line = raw_line.strip()
+        if re.search(r"target\s+word\s+count|word\s+target", line, flags=re.IGNORECASE):
+            continue
+        filtered_lines.append(raw_line)
+
+    out = "\n".join(filtered_lines)
+    replacements = [
+        (r"\bthe reader\b", "the protagonist"),
+        (r"\breaders\b", "audience"),
+        (r"\breader\b", "protagonist"),
+        (r"\bchapter brief\b", "chapter plan"),
+        (r"\bcharacter beats\b", "character arc beats"),
+        (r"\bcharacter beat\b", "character arc beat"),
+        (r"\baction beat\b", "action trigger"),
+        (r"\binteriority beat\b", "inner-reaction beat"),
+        (r"\bcontinuity_flags\b", "continuity notes"),
+    ]
+    for pattern, replacement in replacements:
+        out = re.sub(pattern, replacement, out, flags=re.IGNORECASE)
+
+    out = re.sub(r"\n{3,}", "\n\n", out)
+    return out.strip()
+
+
+def _strip_leading_chapter_intro_lines(text: str) -> str:
+    if not text:
+        return ""
+
+    lines = text.splitlines()
+    idx = 0
+    removed_intro = False
+    while idx < len(lines):
+        line = lines[idx].strip()
+        if not line:
+            idx += 1
+            continue
+        if _CHAPTER_INTRO_RE.match(line):
+            removed_intro = True
+            idx += 1
+            while idx < len(lines) and not lines[idx].strip():
+                idx += 1
+            continue
+        break
+
+    if not removed_intro:
+        return text.strip()
+    return "\n".join(lines[idx:]).strip()
+
+
+def _ensure_complete_sentence_ending(text: str) -> str:
+    candidate = (text or "").strip()
+    if not candidate:
+        return candidate
+
+    if re.search(r"[.!?][\"')\]]*\s*$", candidate):
+        return candidate
+
+    matches = list(re.finditer(r"[.!?][\"')\]]*", candidate))
+    if matches:
+        return candidate[: matches[-1].end()].rstrip()
+
+    return candidate + "."
+
 
 def _chapter_title_from_brief(chapter_num: int, brief: dict) -> str:
     for key in ("title", "chapter_title", "name", "chapter_name"):
@@ -343,6 +416,7 @@ def _normalize_narration_punctuation(text: str) -> str:
 
 
 def _prepare_narration_text(chapter_num: int, chapter_title: str, chapter_text: str) -> str:
+    chapter_text = _strip_leading_chapter_intro_lines(chapter_text)
     cleaned_lines: list[str] = []
     for raw_line in chapter_text.splitlines():
         line = raw_line.strip()
@@ -378,6 +452,7 @@ def _prepare_narration_text(chapter_num: int, chapter_title: str, chapter_text: 
 
     prepared = "\n".join(cleaned_lines).strip()
     prepared = _normalize_narration_punctuation(prepared)
+    prepared = _ensure_complete_sentence_ending(prepared)
 
     if not prepared:
         return prepared
@@ -471,8 +546,10 @@ def _lint_settings() -> LintSettings:
 
 
 def _build_scene_plan(chapter_num: int, brief: dict, context: str) -> str:
+    safe_context = _sanitize_runtime_prompt_text(context)
+    safe_brief = _sanitize_runtime_prompt_text(json.dumps(brief, indent=2))
     first_chapter_block = ""
-    guidance = _first_chapter_guidance(chapter_num)
+    guidance = _sanitize_runtime_prompt_text(_first_chapter_guidance(chapter_num))
     if guidance:
         first_chapter_block = (
             "\nFIRST CHAPTER GUIDANCE (apply this as a hard contract for chapter 1 opening and hook):\n"
@@ -494,12 +571,12 @@ Return markdown only, using this exact format:
 - Exit state: where the scene lands
 
 CHAPTER BRIEF:
-{json.dumps(brief, indent=2)}
+{safe_brief}
 
 {first_chapter_block}
 
 CONTEXT:
-{context}
+{safe_context}
 """
     planner = _llm("editor", temp=0.3, max_tokens=1800)
     try:
@@ -521,6 +598,8 @@ CONTEXT:
 
 
 def _rewrite_scene_plan(chapter_num: int, brief: dict, context: str, invalid_plan: str, parse_error: str, attempt: int) -> str:
+    safe_context = _sanitize_runtime_prompt_text(context)
+    safe_brief = _sanitize_runtime_prompt_text(json.dumps(brief, indent=2))
     rewrite_prompt = f"""
 You are fixing a scene plan format error for chapter {chapter_num}.
 
@@ -552,10 +631,10 @@ Hard rules:
 - Keep each field to one line.
 
 CHAPTER BRIEF:
-{json.dumps(brief, indent=2)}
+{safe_brief}
 
 CONTEXT:
-{context}
+{safe_context}
 
 PARSER ERROR:
 {parse_error}
@@ -745,12 +824,26 @@ def _generate_scene(
     checklist: str,
     prior_scene_text: str,
 ) -> str:
+    safe_scene_title = _sanitize_runtime_prompt_text(scene_title)
+    safe_scene_goal = _sanitize_runtime_prompt_text(scene_goal)
+    safe_scene_entry = _sanitize_runtime_prompt_text(scene_entry)
+    safe_scene_conflict = _sanitize_runtime_prompt_text(scene_conflict)
+    safe_scene_exit = _sanitize_runtime_prompt_text(scene_exit)
+    safe_scene_zero = _sanitize_runtime_prompt_text(scene_zero)
+    safe_action_beat = _sanitize_runtime_prompt_text(action_beat)
+    safe_interiority_beat = _sanitize_runtime_prompt_text(interiority_beat)
+    safe_reversal_hint = _sanitize_runtime_prompt_text(reversal_hint)
+    safe_cliffhanger_hint = _sanitize_runtime_prompt_text(cliffhanger_hint)
+    safe_checklist = _sanitize_runtime_prompt_text(checklist)
+    safe_prior_scene_text = _sanitize_runtime_prompt_text(prior_scene_text)
+    safe_context = _sanitize_runtime_prompt_text(context)
+
     global_min, global_max, _ = _effective_word_targets()
     scene_min = max(200, int(global_min / 3))
     scene_max = max(scene_min, int(global_max / 3))
 
     first_chapter_block = ""
-    guidance = _first_chapter_guidance(chapter_num)
+    guidance = _sanitize_runtime_prompt_text(_first_chapter_guidance(chapter_num))
     if guidance:
         first_chapter_block = (
             "\nFIRST CHAPTER GUIDANCE (mandatory for chapter 1):\n"
@@ -769,16 +862,16 @@ You are the Writer Agent.
 Write one scene for chapter {chapter_num}, scene {scene_idx}.
 Target about {scene_min}-{scene_max} words.
 
-SCENE TITLE: {scene_title}
-GOAL: {scene_goal}
-ENTRY STATE: {scene_entry}
-CONFLICT BEAT: {scene_conflict}
-EXIT STATE: {scene_exit}
-SCENE ZERO LEAD-IN: {scene_zero}
-REVERSAL REQUIREMENT: {reversal_hint}
-MANDATORY ACTION BEAT: {action_beat}
-INTERIORITY BEAT (triggered by action/reversal): {interiority_beat}
-CLIFFHANGER CONSEQUENCE ANCHOR: {cliffhanger_hint}
+SCENE TITLE: {safe_scene_title}
+GOAL: {safe_scene_goal}
+ENTRY STATE: {safe_scene_entry}
+CONFLICT BEAT: {safe_scene_conflict}
+EXIT STATE: {safe_scene_exit}
+SCENE ZERO LEAD-IN: {safe_scene_zero}
+REVERSAL REQUIREMENT: {safe_reversal_hint}
+MANDATORY ACTION BEAT: {safe_action_beat}
+INTERIORITY BEAT (triggered by action/reversal): {safe_interiority_beat}
+CLIFFHANGER CONSEQUENCE ANCHOR: {safe_cliffhanger_hint}
 
 Respect style and continuity.
 - Characters are not aware they are in a story.
@@ -794,10 +887,10 @@ Respect style and continuity.
 {first_chapter_block}
 
 PRIOR SCENES IN THIS CHAPTER:
-{prior_scene_text}
+{safe_prior_scene_text}
 
 CONTEXT:
-{context}
+{safe_context}
 """
 
     writer = _llm("writer", temp=0.8, max_tokens=SETTINGS.writer_max_tokens)
@@ -817,10 +910,10 @@ Return only final scene text.
 Return continuous prose only. No headings, bullet lists, labels, or markdown separators.
 
 CHECKLIST:
-{checklist}
+{safe_checklist}
 
 PRIOR SCENES IN THIS CHAPTER:
-{prior_scene_text}
+{safe_prior_scene_text}
 
 SCENE DRAFT:
 {draft}
@@ -1041,7 +1134,15 @@ def _prune_repeated_sentence_occurrences(chapter_text: str, sentence: str, max_k
     if not target:
         return chapter_text
 
+    total_parts = 0
+    for para in chapter_text.split("\n\n"):
+        for part in re.split(r"(?<=[.!?])\s+", para):
+            if part.strip():
+                total_parts += 1
+    terminal_idx = max(-1, total_parts - 1)
+
     seen = 0
+    idx = 0
     out_paras: list[str] = []
     for para in chapter_text.split("\n\n"):
         parts = re.split(r"(?<=[.!?])\s+", para)
@@ -1049,14 +1150,16 @@ def _prune_repeated_sentence_occurrences(chapter_text: str, sentence: str, max_k
         for part in parts:
             if not part.strip():
                 continue
+            is_terminal_sentence = idx == terminal_idx
+            idx += 1
             if _canon(part) == target:
-                if seen >= max_keep:
+                if seen >= max_keep and not is_terminal_sentence:
                     continue
                 seen += 1
             kept.append(part)
         out_paras.append(" ".join(kept).strip())
 
-    return "\n\n".join(p for p in out_paras if p)
+    return _ensure_complete_sentence_ending("\n\n".join(p for p in out_paras if p))
 
 
 def _remove_meta_phrases(chapter_text: str, phrases: list[str]) -> str:
@@ -1078,7 +1181,7 @@ def _remove_meta_phrases(chapter_text: str, phrases: list[str]) -> str:
     out = re.sub(r"[ \t]{2,}", " ", out)
     out = re.sub(r"\s+([,.;:!?])", r"\1", out)
     out = re.sub(r"\n{3,}", "\n\n", out)
-    return out.strip()
+    return _ensure_complete_sentence_ending(out.strip())
 
 
 def _run_lint_repairs(chapter_num: int, chapter_text: str, brief: dict, context: str) -> str:
@@ -1099,7 +1202,7 @@ def _run_lint_repairs(chapter_num: int, chapter_text: str, brief: dict, context:
         (reviews_dir / f"ch{chapter_num:02d}_lint.md").write_text(to_markdown(report), encoding="utf-8")
 
         if report.get("passed", False):
-            return current
+            return _ensure_complete_sentence_ending(current)
 
         failing_checks = [c for c in report.get("checks", []) if not c.get("passed", False)]
         failing_names = {str(c.get("name", "")) for c in failing_checks}
@@ -1129,7 +1232,7 @@ def _run_lint_repairs(chapter_num: int, chapter_text: str, brief: dict, context:
                     to_markdown(report), encoding="utf-8"
                 )
                 if report.get("passed", False):
-                    return current
+                    return _ensure_complete_sentence_ending(current)
 
                 failing_checks = [c for c in report.get("checks", []) if not c.get("passed", False)]
                 failing_names = {str(c.get("name", "")) for c in failing_checks}
@@ -1167,7 +1270,7 @@ def _run_lint_repairs(chapter_num: int, chapter_text: str, brief: dict, context:
                     to_markdown(report), encoding="utf-8"
                 )
                 if report.get("passed", False):
-                    return current
+                    return _ensure_complete_sentence_ending(current)
 
                 failing_checks = [c for c in report.get("checks", []) if not c.get("passed", False)]
                 failing_names = {str(c.get("name", "")) for c in failing_checks}
@@ -1195,7 +1298,7 @@ def _run_lint_repairs(chapter_num: int, chapter_text: str, brief: dict, context:
                         to_markdown(report), encoding="utf-8"
                     )
                     if report.get("passed", False):
-                        return current
+                        return _ensure_complete_sentence_ending(current)
 
                     failing_checks = [c for c in report.get("checks", []) if not c.get("passed", False)]
                     failing_names = {str(c.get("name", "")) for c in failing_checks}
@@ -1212,7 +1315,7 @@ def _run_lint_repairs(chapter_num: int, chapter_text: str, brief: dict, context:
             (reviews_dir / f"ch{chapter_num:02d}_lint.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
             (reviews_dir / f"ch{chapter_num:02d}_lint.md").write_text(to_markdown(report), encoding="utf-8")
             if report.get("passed", False):
-                return current
+                return _ensure_complete_sentence_ending(current)
             raise RuntimeError(
                 f"Chapter {chapter_num} failed lint checks after {SETTINGS.max_lint_repairs} repair attempts and guarantee. "
                 f"See {reviews_dir / f'ch{chapter_num:02d}_lint.md'}"
@@ -1249,7 +1352,7 @@ CHAPTER BRIEF:
 {json.dumps(brief, indent=2)}
 
 CONTEXT:
-{context}
+{_sanitize_runtime_prompt_text(context)}
 
 CHAPTER:
 {current}
@@ -1260,6 +1363,7 @@ CHAPTER:
             repair_prompt,
             label=f"chapter {chapter_num} lint repair",
         )
+        current = _ensure_complete_sentence_ending(current)
 
     return current
 
@@ -1291,7 +1395,7 @@ Return only revised chapter text.
 - Prefer concrete new detail over restating existing paragraphs.
 
 CONTEXT:
-{context}
+{_sanitize_runtime_prompt_text(context)}
 
 CHAPTER:
 {out}
@@ -1326,6 +1430,7 @@ CHAPTER:
             _log(f"[WARN] Chapter {chapter_num} compression call failed: {exc}")
 
     final_wc = _word_count(out)
+    out = _ensure_complete_sentence_ending(out)
     _log(f"[INFO] Chapter {chapter_num} word count after enforcement: {final_wc}")
     return out
 
@@ -1392,8 +1497,17 @@ def run_chapter(chapter_num: int) -> None:
             if SETTINGS.chapter_intro_enabled and not tts_text.strip().lower().startswith(expected_intro):
                 final_text = files["final"].read_text(encoding="utf-8") if files["final"].exists() else tts_text
                 tts_text = _prepare_narration_text(chapter_num, chapter_title, final_text)
+                tts_text = _remove_meta_phrases(tts_text, list(SETTINGS.meta_phrases))
+                tts_text = _ensure_complete_sentence_ending(tts_text)
                 files["tts"].write_text(tts_text, encoding="utf-8")
                 _log(f"[INFO] Added chapter intro to narration text for chapter {chapter_num}")
+            else:
+                cleaned_tts = _remove_meta_phrases(tts_text, list(SETTINGS.meta_phrases))
+                cleaned_tts = _ensure_complete_sentence_ending(cleaned_tts)
+                if cleaned_tts != tts_text:
+                    tts_text = cleaned_tts
+                    files["tts"].write_text(tts_text, encoding="utf-8")
+                    _log(f"[INFO] Sanitized narration text for chapter {chapter_num} before TTS")
             narrate_chapter(
                 text=tts_text,
                 voice_sample=SETTINGS.voice_sample,
@@ -1418,13 +1532,14 @@ def run_chapter(chapter_num: int) -> None:
     style_raw = _load_text("style_guide.txt")
     max_sg_chars = getattr(SETTINGS, "style_guide_max_chars", 0)
     style = style_raw[:max_sg_chars] if max_sg_chars > 0 else style_raw
+    style = _sanitize_runtime_prompt_text(style)
     if max_sg_chars > 0 and len(style_raw) > max_sg_chars:
         _log(
             f"[DEBUG] Chapter {chapter_num} style guide truncated "
             f"({len(style_raw)} -> {len(style)} chars)"
         )
-    checklist = _load_text("consistency_checklist.txt")
-    first_chapter_guidance = _first_chapter_guidance(chapter_num)
+    checklist = _sanitize_runtime_prompt_text(_load_text("consistency_checklist.txt"))
+    first_chapter_guidance = _sanitize_runtime_prompt_text(_first_chapter_guidance(chapter_num))
     scene_zero = brief.get("scene_zero") or brief.get("opens_with") or ""
     action_beat = _brief_flag_value(brief, "ACTION BEAT") or "Use a concrete movement that changes the physical state of the scene."
     interiority_beat = _brief_flag_value(brief, "INTERIORITY BEAT") or "Reveal core-wound pressure through a reaction tied to action."
@@ -1451,6 +1566,7 @@ def run_chapter(chapter_num: int) -> None:
     )
     if first_chapter_guidance:
         context += "\n\nFIRST CHAPTER GUIDANCE (mandatory constraints):\n" + first_chapter_guidance
+    context = _sanitize_runtime_prompt_text(context)
 
     _debug_len(f"Chapter {chapter_num} context", context)
     _log(f"[INFO] Chapter {chapter_num} scene plan generation started")
@@ -1532,6 +1648,8 @@ def run_chapter(chapter_num: int) -> None:
     )
     final = _run_lint_repairs(chapter_num, final, brief, context)
     final = _recover_chapter_length_after_repairs(chapter_num, final, brief, context, word_min, word_max)
+    final = _remove_meta_phrases(final, list(SETTINGS.meta_phrases))
+    final = _ensure_complete_sentence_ending(final)
     _debug_len("Final chapter (post-enforcement)", final)
 
     archivist_prompt = """
@@ -1550,6 +1668,8 @@ CHAPTER:
         label=f"chapter {chapter_num} archivist summary",
     )
     tts_text = _prepare_narration_text(chapter_num, chapter_title, final)
+    tts_text = _remove_meta_phrases(tts_text, list(SETTINGS.meta_phrases))
+    tts_text = _ensure_complete_sentence_ending(tts_text)
 
     files["draft"].write_text("\n\n".join(scene_texts), encoding="utf-8")
     files["edited"].write_text(full_chapter, encoding="utf-8")

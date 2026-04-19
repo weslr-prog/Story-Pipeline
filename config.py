@@ -98,7 +98,7 @@ class Settings:
     max_sentence_repeat: int = _env_int("MAX_SENTENCE_REPEAT", 2)
     meta_phrases: tuple[str, ...] = _env_csv(
         "META_PHRASES",
-        "this is only the beginning,on a journey,story had only started,dear reader,in this chapter,the author,the writer,prompt,model,ai",
+        "this is only the beginning,on a journey,story had only started,dear reader,reader,in this chapter,the author,the writer,prompt,model,ai,word count,word target,target word count,chapter brief,character beat,character beats,continuity flags,continuity_flags",
     )
     chapter1_forbidden_terms: tuple[str, ...] = _env_csv(
         "CHAPTER1_FORBIDDEN_TERMS",
